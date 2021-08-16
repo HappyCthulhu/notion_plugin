@@ -1,0 +1,13 @@
+{
+  "manifest_version": 3,
+  "name": "bookmarks adding",
+  "version": "1.0",
+  "background": {
+    "service_worker": "background_script.js"
+  },
+  "permissions":[
+    "bookmarks",
+    "alarms"
+  ]
+}
+
