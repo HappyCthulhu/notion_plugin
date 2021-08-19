@@ -51,12 +51,11 @@ def collect_pages(block, depth=0):
         comparing_depth_to_length = compare_depth_to_length(depth)
         page_name, page_url = create_bookmark_data(comparing_depth_to_length, depth, block)
 
-
         path.append({'title': page_name, 'page_url': page_url})
 
-        if not page_url in old_pages_links:
 
-            logger.debug(f'Найдена новая страница: {page_name}: {page_url}')
+        if not page_url in old_pages_links:
+            logger.info(f'Найдена новая страница: {page_name}: {page_url}')
 
             telegram = get_notifier('telegram')
             telegram.notify(
@@ -70,49 +69,56 @@ def collect_pages(block, depth=0):
             collect_pages(child, depth=depth + 1)
 
 
-if __name__ == '__main__':
-
-    # TODO: прихуярить инпуты
-    logger = set_logger()
-
-    all_pages_file = 'all_notion_pages.json'
-    new_pages_file = 'new_notion_pages.json'
+def notion_tracking():
+    logger.debug('Starting tracking Notion')
 
     for file in (all_pages_file, new_pages_file):
         if not Path(file).is_file():
             with open(file, 'w') as file_data:
                 json.dump({}, file_data)
 
-    while True:
-        with open(all_pages_file, 'r') as file:
-            old_pages = json.load(file)
+    with open(all_pages_file, 'r') as file:
+        old_pages = json.load(file)
 
-        old_pages_links = [page['page_url'] for page in old_pages]
+    # TODO: это точно норм работает?
+    global old_pages_links
+    old_pages_links = [page['page_url'] for page in old_pages]
 
-        client = NotionClient(token_v2=os.environ.get('TOKEN'))
-        link = os.environ['LINK']
-        page = client.get_block(link)
-        child_pages = get_childs(page)
-        path = []
-        new_pages = []
+    client = NotionClient(token_v2=os.environ.get('TOKEN'))
+    link = os.environ['LINK']
+    page = client.get_block(link)
+    child_pages = get_childs(page)
 
-        for block in child_pages:
-            collect_pages(block)
+    global path
+    path = []
 
-        with open(all_pages_file, 'w') as file:
-            json.dump(path, file, ensure_ascii=False, indent=4)
+    global new_pages
+    new_pages = []
 
-        # TODO: возможно эту часть можно перенести выше, чтоб после обнаружения файлы перезапись шла сразу
-        with open(new_pages_file, 'r', encoding='utf-8') as file:
-            file_data = json.load(file)
-            print(file_data)
-            print(file_data)
+    for block in child_pages:
+        collect_pages(block)
 
-        with open(new_pages_file, 'w') as file:
-            if file_data:
-                json.dump(file_data + new_pages, file, ensure_ascii=False, indent=4)
+    with open(all_pages_file, 'w') as file:
+        json.dump(path, file, ensure_ascii=False, indent=4)
 
-            else:
-                json.dump(new_pages, file, ensure_ascii=False, indent=4)
+    # TODO: возможно эту часть можно перенести выше, чтоб после обнаружения файлы перезапись шла сразу
+    with open(new_pages_file, 'r', encoding='utf-8') as file:
+        file_data = json.load(file)
+        print(file_data)
+        print(file_data)
 
-        logger.critical('Цикл завершен')
+    with open(new_pages_file, 'w') as file:
+        if file_data:
+            json.dump(file_data + new_pages, file, ensure_ascii=False, indent=4)
+
+        else:
+            json.dump(new_pages, file, ensure_ascii=False, indent=4)
+
+    logger.debug('Finished tracking Notion')
+
+# TODO: прихуярить инпуты
+logger = set_logger()
+
+all_pages_file = 'all_notion_pages.json'
+new_pages_file = 'new_notion_pages.json'
+
