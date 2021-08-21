@@ -1,6 +1,7 @@
 import json
 import os
 
+import psycopg2
 from notifiers import get_notifier
 
 from logging_settings import set_logger
@@ -10,6 +11,10 @@ from parse_bookmarks import parse_bookmarks
 # 2: переименование заметки (перенос заметки в другое место) (url идентичен, меняется имя)
 ## удаляем заметку с этим url
 ## добавляем новую заметку
+
+# TODO: сделать одно соединение с ДБ для всех файлов
+# TODO: написать тесты к этой всей красоте
+
 
 def get_duplicated_bookmarks_ids(bookmarks):
     ids_for_removing = []
@@ -58,7 +63,7 @@ def get_bookmarks_ids_of_deleted_pages(notion_pages, bookmarks):
             logger.debug(f"Найдена новая страница: {bookmark['title']}: {bookmark['page_url']}")
             from logging_settings import set_logger
             telegram.notify(
-                message=f'Страница {bookmark["title"]} была удалена', token=os.environ['TELEGRAM_KEY'],
+                message=f'Страница была удалена из Notion: "{bookmark["title"]}"', token=os.environ['TELEGRAM_KEY'],
                 chat_id=os.environ['TELEGRAM_CHAT_ID'])
 
     deleted_pages_ids = [bookmark['id'] for bookmark in deleted_pages]
@@ -66,9 +71,18 @@ def get_bookmarks_ids_of_deleted_pages(notion_pages, bookmarks):
     return deleted_pages_ids
 
 
+def get_conn_and_cursor():
+    conn = psycopg2.connect(host=os.environ['DB_HOST_NAME'], user=os.environ['DB_USER_NAME'],
+                            password=os.environ['DB_PASSWORD'], dbname=os.environ['DB_NAME'])
+    cursor = conn.cursor()
+    return conn, cursor
+
 def collect_pages_for_removing():
-    with open(all_notion_pages_fp, 'r') as all_pages_file:
-        notion_pages = json.load(all_pages_file)
+    conn, cursor = get_conn_and_cursor()
+
+    cursor.execute(f"SELECT title, link FROM all_notion_pages;")
+
+    notion_pages = [{'title': page[0], 'page_url': page[1]} for page in cursor.fetchall()]
 
     chrome_bookmarks = parse_bookmarks()
 
@@ -79,6 +93,11 @@ def collect_pages_for_removing():
 
     ids_for_removing = (*deleted_pages_ids, *duplicated_bookmarks_ids)
 
+    for id in ids_for_removing:
+        cursor.execute(
+            f"INSERT INTO bookmarks_for_removing (bookmark_id) VALUES ('{id}')")
+        conn.commit()
+
     with open(pages_for_removing_fp, 'w') as pages_for_removing_file:
         json.dump(ids_for_removing, pages_for_removing_file)
 
@@ -87,5 +106,6 @@ def collect_pages_for_removing():
 
 logger = set_logger()
 
+# TODO: все это нужно удалить позже
 all_notion_pages_fp = 'all_notion_pages.json'
 pages_for_removing_fp = 'pages_for_removing.json'
