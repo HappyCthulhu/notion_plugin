@@ -1,5 +1,6 @@
 import json
 import os
+from datetime import datetime, timezone
 from pathlib import Path
 
 import psycopg2 as psycopg2
@@ -58,15 +59,17 @@ def create_bookmark_data(comparing_depth_to_length, depth, _block):
 
 def collect_pages(block, depth=0):
     if depth == 0:
-        path.append({'title': block.title.lower(), 'page_url': block.get_browseable_url()})
+        # TODO: сюда вообще нужно было добавлять last_edited_time, create_time?
+        path.append({'title': block.title.lower(), 'page_url': block.get_browseable_url(),
+                     'created_time': block._get_record_data()['created_time'],
+                     'last_edited_time': block._get_record_data()['last_edited_time']})
 
     else:
         comparing_depth_to_length = compare_depth_to_length(depth)
         page_name, page_url = create_bookmark_data(comparing_depth_to_length, depth, block)
 
-        path.append({'title': page_name, 'page_url': page_url})
-
-
+        path.append({'title': page_name, 'page_url': page_url, 'created_time': block._get_record_data()['created_time'],
+                     'last_edited_time': block._get_record_data()['last_edited_time']})
 
         if not page_url in old_pages_links:
             logger.info(f'Найдена новая страница: {page_name}: {page_url}')
@@ -77,12 +80,21 @@ def collect_pages(block, depth=0):
 
             new_pages.append({'title': page_name, 'page_url': page_url})
 
+            created_time = datetime.fromtimestamp(float(str(block._get_record_data()['created_time'])[0:-3]))
+            last_edited_time = datetime.fromtimestamp(float(str(block._get_record_data()['last_edited_time'])[0:-3]))
+
+
             cursor.execute(
-                f"INSERT INTO new_pages (title, link) VALUES ('{page_name}', '{page_url}')")
+                f"INSERT INTO new_pages (title, link, created_time, last_edited_time) VALUES ('{page_name}', '{page_url}', '{created_time}', '{last_edited_time}')")
             conn.commit()
 
-            path.append({'title': page_name, 'page_url': page_url})
 
+            cursor.execute(
+                f"INSERT INTO all_notion_pages (title, link, created_time, last_edited_time) VALUES ('{page_name}', '{page_url}', '{created_time}', '{last_edited_time}')")
+            conn.commit()
+
+            path.append({'title': page_name, 'page_url': page_url, 'created_time': block._get_record_data()['created_time'],
+                     'last_edited_time': block._get_record_data()['last_edited_time']})
 
     for child in block.children:
         if child.type in ["page", "collection"]:
@@ -115,17 +127,13 @@ def compare_bookmarks_with_notion_pages(bookmarks, notion_pages):
 def notion_tracking():
     logger.debug('Starting tracking Notion')
 
-    for file in (all_pages_file, new_pages_file):
-        if not Path(file).is_file():
-            with open(file, 'w') as file_data:
-                json.dump({}, file_data)
-
-    with open(all_pages_file, 'r') as file:
-        old_pages = json.load(file)
-
     global conn, cursor
 
     conn, cursor = get_conn_and_cursor()
+
+
+    cursor.execute(f"SELECT title, link, created_time, last_edited_time FROM all_notion_pages;")
+    old_pages = [{'title': elem[0], 'page_url': elem[1]} for elem in cursor.fetchall()]
 
 
     # TODO: это точно норм работает?
@@ -147,35 +155,27 @@ def notion_tracking():
     for block in child_pages:
         collect_pages(block)
 
+    # TODO: вот это удалить за ненадобностью
     with open(all_pages_file, 'w') as file:
         json.dump(path, file, ensure_ascii=False, indent=4)
 
-    cursor.execute(f'TRUNCATE TABLE all_notion_pages CASCADE')
+    # TODO: приделать SELECT из all_notion_pages
+    # TODO: приделать систему мониторинга ДБ на наличие в ней значений
+
 
     for page in path:
         cursor.execute(
-            f"INSERT INTO all_notion_pages (title, link) VALUES ('{page['title']}', '{page['page_url']}')")
+            f"INSERT INTO all_notion_pages (title, link, created_time, last_edited_time) VALUES ('{page['title']}', '{page['page_url']}', '{page._get_record_data()['created_time']}', '{page._get_record_data()['last_edited_time']}')")
     conn.commit()
 
     # TODO: возможно эту часть можно перенести выше, чтоб после обнаружения файлы перезапись шла сразу
-    with open(new_pages_file, 'r', encoding='utf-8') as file:
-        file_data = json.load(file)
 
     exist_in_notion_but_not_in_chrome_bookmarks = compare_bookmarks_with_notion_pages(parse_bookmarks(), old_pages)
-
-    with open(new_pages_file, 'w') as file:
-        # TODO: это точно работает нормально? Написать юнит-тест
-        # TODO: и вообще: все, что находится в этой функции нужно разбить по маленьким функциям
-        if file_data:
-            json.dump([*json.loads(file_data), *new_pages, *exist_in_notion_but_not_in_chrome_bookmarks], file,
-                      ensure_ascii=False, indent=4)
-
-        else:
-            json.dump([*new_pages, *exist_in_notion_but_not_in_chrome_bookmarks], file, ensure_ascii=False, indent=4)
 
     conn.close()
 
     logger.debug('Finished tracking Notion')
+
 
 
 # TODO: прихуярить инпуты
