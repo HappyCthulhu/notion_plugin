@@ -63,13 +63,29 @@ def add_pages():
 @app.route("/remove")
 @cross_origin()
 def remove_pages():
-    with open(pages_for_removing_file, 'r') as file:
-        pages_for_removing = file.read()
+    cursor.execute(f"SELECT bookmark_id FROM bookmarks_for_remove;")
+    bookmarks_for_remove = cursor.fetchall()
+    if bookmarks_for_remove:
+        bookmarks_for_remove = json.dumps([bookmark_id[0] for bookmark_id in bookmarks_for_remove], ensure_ascii=False)
+        print(f'bookmarks_for_remove: {bookmarks_for_remove}')
+        logger.info(f'Закладки для удаления из базы: {bookmarks_for_remove}')
 
-    with open(pages_for_removing_file, 'w') as file:
-        json.dump({}, file)
+        telegram = get_notifier('telegram')
+        telegram.notify(
+            message=f'Закладки для удаления из базы: {bookmarks_for_remove}', token=os.environ['TELEGRAM_KEY'],
+            chat_id=os.environ['TELEGRAM_CHAT_ID'])
 
-    return pages_for_removing
+        cursor.execute(f'TRUNCATE TABLE bookmarks_for_remove CASCADE')
+        conn.commit()
+
+        telegram.notify(
+            message='В данный момент база "bookmarks_for_remove" должна быть пуста', token=os.environ['TELEGRAM_KEY'],
+            chat_id=os.environ['TELEGRAM_CHAT_ID'])
+        logger.debug('В данный момент база "bookmarks_for_remove" должна быть пуста')
+
+        return bookmarks_for_remove
+
+    return {}
 
 
 def signal_handler(signal, frame):

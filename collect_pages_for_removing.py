@@ -37,21 +37,18 @@ def get_duplicated_bookmarks_ids(bookmarks):
                         f'Url закладки: {bookmark["page_url"]}',
                 token=os.environ['TELEGRAM_KEY'], chat_id=os.environ['TELEGRAM_CHAT_ID'])
 
-            # TODO: приделать поиск по названию чисто для логгирования
-
-            logger.info(f'Были найдены дублированные закладки:')
-            logger.debug(f'Idшники для удаления: {duplicates_ids[1:]}')
-            logger.debug(f'Название закладок: {bookmark["title"]}')
-            logger.debug(f'Url закладок: {bookmark["page_url"]}')
+            logger.info(f'Были найдены дублированные закладки:\n'
+                        f'Idшники для удаления: {duplicates_ids[1:]}\n'
+                        f'Название закладок: {bookmark["title"]}\n'
+                        f'Url закладок: {bookmark["page_url"]}')
 
             ids_for_removing = [*ids_for_removing, *duplicates_ids[1:]]
-
-
 
     return ids_for_removing
 
 
 def get_bookmarks_ids_of_deleted_pages(notion_pages, bookmarks):
+
     notion_pages_links = [notion_page['page_url'] for notion_page in notion_pages]
     deleted_pages = []
 
@@ -60,8 +57,7 @@ def get_bookmarks_ids_of_deleted_pages(notion_pages, bookmarks):
             deleted_pages.append(bookmark)
             telegram = get_notifier('telegram')
 
-            logger.debug(f"Найдена новая страница: {bookmark['title']}: {bookmark['page_url']}")
-            from logging_settings import set_logger
+            logger.debug(f"Страница была удалена из Notion: {bookmark['title']}: {bookmark['page_url']}")
             telegram.notify(
                 message=f'Страница была удалена из Notion: "{bookmark["title"]}"', token=os.environ['TELEGRAM_KEY'],
                 chat_id=os.environ['TELEGRAM_CHAT_ID'])
@@ -76,6 +72,7 @@ def get_conn_and_cursor():
                             password=os.environ['DB_PASSWORD'], dbname=os.environ['DB_NAME'])
     cursor = conn.cursor()
     return conn, cursor
+
 
 def collect_pages_for_removing():
     conn, cursor = get_conn_and_cursor()
@@ -95,11 +92,8 @@ def collect_pages_for_removing():
 
     for id in ids_for_removing:
         cursor.execute(
-            f"INSERT INTO bookmarks_for_removing (bookmark_id) VALUES ('{id}')")
+            f"INSERT INTO bookmarks_for_remove (bookmark_id) VALUES ('{id}')")
         conn.commit()
-
-    with open(pages_for_removing_fp, 'w') as pages_for_removing_file:
-        json.dump(ids_for_removing, pages_for_removing_file)
 
     logger.debug('Finished collecting pages for removing')
 

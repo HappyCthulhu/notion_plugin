@@ -1,7 +1,5 @@
-import json
 import os
-from datetime import datetime, timezone
-from pathlib import Path
+from datetime import datetime
 
 import psycopg2 as psycopg2
 from notifiers import get_notifier
@@ -14,6 +12,7 @@ from parse_bookmarks import parse_bookmarks
 
 
 # TODO: проверяю ли я где-то перед добавлянием новой страницы в букмарки, нет ли ее в букмарках случаем?
+# TODO: продумать, как это все поделить
 
 
 def get_conn_and_cursor():
@@ -83,18 +82,17 @@ def collect_pages(block, depth=0):
             created_time = datetime.fromtimestamp(float(str(block._get_record_data()['created_time'])[0:-3]))
             last_edited_time = datetime.fromtimestamp(float(str(block._get_record_data()['last_edited_time'])[0:-3]))
 
-
             cursor.execute(
                 f"INSERT INTO new_pages (title, link, created_time, last_edited_time) VALUES ('{page_name}', '{page_url}', '{created_time}', '{last_edited_time}')")
             conn.commit()
-
 
             cursor.execute(
                 f"INSERT INTO all_notion_pages (title, link, created_time, last_edited_time) VALUES ('{page_name}', '{page_url}', '{created_time}', '{last_edited_time}')")
             conn.commit()
 
-            path.append({'title': page_name, 'page_url': page_url, 'created_time': block._get_record_data()['created_time'],
-                     'last_edited_time': block._get_record_data()['last_edited_time']})
+            path.append(
+                {'title': page_name, 'page_url': page_url, 'created_time': block._get_record_data()['created_time'],
+                 'last_edited_time': block._get_record_data()['last_edited_time']})
 
     for child in block.children:
         if child.type in ["page", "collection"]:
@@ -131,10 +129,8 @@ def notion_tracking():
 
     conn, cursor = get_conn_and_cursor()
 
-
     cursor.execute(f"SELECT title, link, created_time, last_edited_time FROM all_notion_pages;")
     old_pages = [{'title': elem[0], 'page_url': elem[1]} for elem in cursor.fetchall()]
-
 
     # TODO: это точно норм работает?
     global old_pages_links
@@ -155,13 +151,6 @@ def notion_tracking():
     for block in child_pages:
         collect_pages(block)
 
-    # TODO: вот это удалить за ненадобностью
-    with open(all_pages_file, 'w') as file:
-        json.dump(path, file, ensure_ascii=False, indent=4)
-
-    # TODO: приделать SELECT из all_notion_pages
-    # TODO: приделать систему мониторинга ДБ на наличие в ней значений
-
 
     for page in path:
         cursor.execute(
@@ -170,6 +159,7 @@ def notion_tracking():
 
     # TODO: возможно эту часть можно перенести выше, чтоб после обнаружения файлы перезапись шла сразу
 
+    # TODO: wtf, где это использовалось
     exist_in_notion_but_not_in_chrome_bookmarks = compare_bookmarks_with_notion_pages(parse_bookmarks(), old_pages)
 
     conn.close()
@@ -177,9 +167,5 @@ def notion_tracking():
     logger.debug('Finished tracking Notion')
 
 
-
 # TODO: прихуярить инпуты
 logger = set_logger()
-
-all_pages_file = 'all_notion_pages.json'
-new_pages_file = 'new_notion_pages.json'
