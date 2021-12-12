@@ -2,8 +2,6 @@ import json
 import os
 
 # TODO: это может хреново работать, ибо должно вызываться всего раз за отработку цикл
-import psycopg2
-
 
 def get_first_stage():
     with open(JSONIN, "r", encoding='utf-8') as f:
@@ -58,7 +56,7 @@ def parse_bookmarks():
     first_stage = Bookmarks['roots']['bookmark_bar']['children']
     folder_data = find_folder(first_stage)
 
-    # TODO: почему keyerror "url" ошибка выдавала?
+    # TODO: почему key error "url" ошибка выдавала?
     bookmarks = [{"title": children['name'], "page_url": children.get('url'), "id": children['id']} for children in
                  folder_data['children'] if children.get('url')]
     return bookmarks

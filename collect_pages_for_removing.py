@@ -68,8 +68,7 @@ def get_bookmarks_ids_of_deleted_pages(notion_pages, bookmarks):
 
 
 def get_conn_and_cursor():
-    conn = psycopg2.connect(host=os.environ['DB_HOST_NAME'], user=os.environ['DB_USER_NAME'],
-                            password=os.environ['DB_PASSWORD'], dbname=os.environ['DB_NAME'])
+    conn = psycopg2.connect(host=os.environ['DB_HOST_NAME'], user=os.environ['DB_USER_NAME'], password=os.environ['DB_PASSWORD'], dbname=os.environ['DB_NAME'])
     cursor = conn.cursor()
     return conn, cursor
 

@@ -14,6 +14,7 @@ from parse_bookmarks import parse_bookmarks
 # TODO: проверяю ли я где-то перед добавлянием новой страницы в букмарки, нет ли ее в букмарках случаем?
 # TODO: продумать, как это все поделить
 
+# TODO: вспомнить, как Никитос добавлял один общий сonnection
 
 def get_conn_and_cursor():
     conn = psycopg2.connect(host=os.environ['DB_HOST_NAME'], user=os.environ['DB_USER_NAME'],
@@ -123,6 +124,7 @@ def compare_bookmarks_with_notion_pages(bookmarks, notion_pages):
 
 
 def notion_tracking():
+    print('Im Error on notion_tracking()')
     logger.debug('Starting tracking Notion')
 
     global conn, cursor
