@@ -68,7 +68,9 @@ def get_bookmarks_ids_of_deleted_pages(notion_pages, bookmarks):
 
 
 def get_conn_and_cursor():
-    conn = psycopg2.connect(host=os.environ['DB_HOST_NAME'], user=os.environ['DB_USER_NAME'], password=os.environ['DB_PASSWORD'], dbname=os.environ['DB_NAME'])
+    # TODO: тут какой-то трабл с переменными среды. Нужно поправить
+    conn = psycopg2.connect(host='127.0.0.1', user='postgres', password='12345', dbname='notion_plugin')
+    # conn = psycopg2.connect(host=os.environ['DB_HOST_NAME'], user=os.environ['DB_USER_NAME'], password=os.environ['DB_PASSWORD'], dbname=os.environ['DB_NAME'])
     cursor = conn.cursor()
     return conn, cursor
 
@@ -84,6 +86,7 @@ def collect_pages_for_removing():
 
     # 1: если заметка была удалена в Notion: вся информация о закладке есть в браузере, но нет в списке страниц Notion)
     deleted_pages_ids = get_bookmarks_ids_of_deleted_pages(notion_pages, chrome_bookmarks)
+    print(deleted_pages_ids)
 
     duplicated_bookmarks_ids = get_duplicated_bookmarks_ids(chrome_bookmarks)
 
@@ -100,5 +103,5 @@ def collect_pages_for_removing():
 logger = set_logger()
 
 # TODO: все это нужно удалить позже
-all_notion_pages_fp = 'all_notion_pages.json'
-pages_for_removing_fp = 'pages_for_removing.json'
+# all_notion_pages_fp = 'all_notion_pages.json'
+# pages_for_removing_fp = 'pages_for_removing.json'

@@ -6,8 +6,11 @@ from notifiers import get_notifier
 from notion.block import PageBlock
 from notion.client import NotionClient
 
+from app import db
 from logging_settings import set_logger
+
 # 3: заметка присутствует в списке notion-страниц, но отсутствует в закладках
+from models import AllNotionPages, NewNotionPages
 from parse_bookmarks import parse_bookmarks
 
 
@@ -83,10 +86,17 @@ def collect_pages(block, depth=0):
             created_time = datetime.fromtimestamp(float(str(block._get_record_data()['created_time'])[0:-3]))
             last_edited_time = datetime.fromtimestamp(float(str(block._get_record_data()['last_edited_time'])[0:-3]))
 
+            # page = NewNotionPages(title=page_name, link=page_url, created_time=created_time, last_edited_time=last_edited_time)
+            # db.session.add(page)
+            # db.session.commit()
             cursor.execute(
-                f"INSERT INTO new_pages (title, link, created_time, last_edited_time) VALUES ('{page_name}', '{page_url}', '{created_time}', '{last_edited_time}')")
+                f"INSERT INTO new_pages (title, link, created_time, last_edited_time, page_id) VALUES ('{page_name}', '{page_url}', '{created_time}', '{last_edited_time}')")
             conn.commit()
 
+
+            # page = AllNotionPages(title=page_name, link=page_url, created_time=created_time, last_edited_time=last_edited_time)
+            # db.session.add(page)
+            # db.session.commit()
             cursor.execute(
                 f"INSERT INTO all_notion_pages (title, link, created_time, last_edited_time) VALUES ('{page_name}', '{page_url}', '{created_time}', '{last_edited_time}')")
             conn.commit()
@@ -106,6 +116,7 @@ def compare_bookmarks_with_notion_pages(bookmarks, notion_pages):
     bookmarks_titles_urls = {bookmark['title']: bookmark['page_url'] for bookmark in bookmarks}
 
     for notion_page in notion_pages:
+        # TODO: че здесь происходит???
         if bookmarks_titles_urls.get(notion_page['title']) == notion_page['page_url']:
             continue
         else:
@@ -124,7 +135,7 @@ def compare_bookmarks_with_notion_pages(bookmarks, notion_pages):
 
 
 def notion_tracking():
-    print('Im Error on notion_tracking()')
+    # print('Im Error on notion_tracking()')
     logger.debug('Starting tracking Notion')
 
     global conn, cursor
@@ -155,14 +166,21 @@ def notion_tracking():
 
 
     for page in path:
+        # TODO: корневые страницы все равно не индексируются (их нет в закладках в результате)(((
         cursor.execute(
             f"INSERT INTO all_notion_pages (title, link, created_time, last_edited_time) VALUES ('{page['title']}', '{page['page_url']}', '{page._get_record_data()['created_time']}', '{page._get_record_data()['last_edited_time']}')")
     conn.commit()
 
     # TODO: возможно эту часть можно перенести выше, чтоб после обнаружения файлы перезапись шла сразу
 
-    # TODO: wtf, где это использовалось
+    # TODO: wtf, где это использовалось. Нужно это добавить в new_pages?
     exist_in_notion_but_not_in_chrome_bookmarks = compare_bookmarks_with_notion_pages(parse_bookmarks(), old_pages)
+
+    # TODO: допилить
+    # for page in exist_in_notion_but_not_in_chrome_bookmarks:
+    #     cursor.execute(
+    #         f"INSERT INTO new_pages (title, link, created_time, last_edited_time) VALUES ('{page_name}', '{page_url}', '{created_time}', '{last_edited_time}')")
+    #     conn.commit()
 
     conn.close()
 
