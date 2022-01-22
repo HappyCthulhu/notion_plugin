@@ -1,72 +1,34 @@
 import os
-import sys
-import time
 from datetime import datetime
 
 import allure
-import pytest
 from mimesis.random import Random
 from notion.block import PageBlock
 from notion.client import NotionClient
-from requests import HTTPError
 
 from app import db
 from collect_pages_for_removing import get_bookmarks_ids_of_deleted_pages, get_duplicated_bookmarks_ids
 from collect_pages_for_removing import logger
 from models import AllNotionPages, NewNotionPages
-from parse_bookmarks import parse_bookmarks
+from some_tests.unit_tests.help_funcs_for_tests import wait_until, wait_until_not, find_bookmark_by_title, \
+    check_present_of_record_in_db_all_notion_pages
 from some_tests.unit_tests.test_data.test_data import BookmarksDontContainsFewNotionPages
 
 rand = Random()
 
 
-# TODO: все это чудо вынести в отдельные фаел
-def check_present_of_record_in_db_all_notion_pages(title):
-    # TODO: удалить переменную
-    test = db.session.query(AllNotionPages).filter_by(title=title).all()
-
-    if test:
-        return True
-    else:
-        return False
-
-
-def find_bookmark_by_title(title):
-    bookmarks = parse_bookmarks()
-    for bookmark in bookmarks:
-        if bookmark['title'] == title:
-            return True
-
-    return False
-
-
-def wait_until(what, title, timeout, total_time):
-    start_time = datetime.now()
-    while int((datetime.now() - start_time).total_seconds()) < total_time:
-        if what(title):
-            return True
-        time.sleep(timeout)
-
-    return False
-
-
-def wait_until_not(what, title, timeout, total_time):
-    start_time = datetime.now()
-    while int((datetime.now() - start_time).total_seconds()) < total_time:
-        if what(title):
-            time.sleep(timeout)
-        else:
-            return True
-
-    return False
-
-
 # TODO: создать классы, в которых будут содержаться данные для тестов (json-ны, например). Каждый аргумент класса (DataForTest.notion_page_was_deleted) должен возвращать bookmark, notion_pages с содажранием, соответствующим названию аргумента
-
+# TODO: создать миграции для БД
 # TODO: Может тестовые данные запихнуть в БД и создать правила их наполнения для conftest? фикстуры не обязательно должны применяться автоматически
-# TODO: Notion-plugin. Сделать Selenium-скрипт, который добавлял бы заметку и ждал, пока она появится в ДБ. Тест должен выполняться последним
 
 class TestCollectPagesForRemoving:
+    @allure.title("Проверка наличия connection")
+    def test_notion_connection(self):
+        with allure.step('Устанавливаем connection c Notion'):
+            client = NotionClient(token_v2=os.environ.get('TOKEN'))
+            page = client.get_block('https://www.notion.so/gazarov/0fe33ef038ba4ba489e4c6ab9b6430ee')
+            assert page
+
     @allure.id("5")
     @allure.title("Получение id  удаленных страниц")
     @allure.label("owner", "admin")
@@ -85,7 +47,6 @@ class TestCollectPagesForRemoving:
 
         assert ids_for_removing == ["2789", "2790"]
 
-    # TODO: можно написать тест с похожей структурой, только интеграционный: полную проверку цикла удаления
     # TODO: приделать неавтоматическую фикстуру, которая устанавливает connection с дб
     @allure.title("Скрипт удаляет закладку, которой нет в БД")
     def test_script_delete_bookmark_that_doesnt_exist_in_db(self):
@@ -135,18 +96,10 @@ class TestCollectPagesForRemoving:
                                   600), 'Тестовая закладка не была найдена'
             logger.debug('Тестовая запись была успешно удалена из all_notion_pages')
 
-    @pytest.mark.debug
     @allure.title("Проверка удаления страницы")
     def test_script_delete_from_db_deleted_in_notion_page(self):
-
         with allure.step('Устанавливаем connection c Notion'):
-            # TODO: cделать тест коннекшена отдельным
-            try:
-                client = NotionClient(token_v2=os.environ.get('TOKEN'))
-
-            except HTTPError:
-                logger.critical('Wrong notion token')
-                sys.exit()
+            client = NotionClient(token_v2=os.environ.get('TOKEN'))
 
         with allure.step('Создаем запись в Notion'):
             title = rand.randstr(True, length=15)
@@ -168,7 +121,5 @@ class TestCollectPagesForRemoving:
             assert wait_until_not(check_present_of_record_in_db_all_notion_pages, title, 1,
                                   600), 'Тестовая закладка не была найдена'
 
-# TODO: cделать тест на проверку создания страницы
-# TODO: написать тест, который с помощью селениума добавлял бы новую закладку с фиксированным названием, проверял, что она добавляется в Notion и удалял ее позже
-# TODO: cделать тест на удаление переименованных страниц
+# TODO: cделать тест на успешное переименованных страниц
 # TODO: найти и заменить все токены и прочие штуки, которые должны быть заменены на переменные среды
