@@ -20,6 +20,7 @@ allure-python-commons = "^2.9.43"
 pytest-env = "^0.6.2"
 psycopg2 = "^2.9.2"
 Flask-SQLAlchemy = "^2.5.1"
+mimesis = "^5.2.1"
 
 [tool.poetry.dev-dependencies]
 
