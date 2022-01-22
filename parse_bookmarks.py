@@ -62,7 +62,7 @@ def parse_bookmarks():
     return bookmarks
 
 
-JSONIN = "/home/valera/.config/google-chrome/Default/Bookmarks"
+JSONIN = os.environ['JSONIN']
 
 folders_ids = []
 folder_id = int(os.environ['BOOKMARKS_FOLDER'])
