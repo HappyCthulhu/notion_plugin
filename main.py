@@ -13,11 +13,6 @@ from models import NewNotionPages, BookmarksForRemove
 from notion_tracking import notion_tracking
 
 
-# all_results = AllNotionPages.query.all()
-# test_shit = db.session.query(AllNotionPages).filter_by(title='дела/it/проекты').first()
-# test_link = test_shit.link
-
-
 @app.route("/add")
 @cross_origin()
 def add_pages():
@@ -81,7 +76,6 @@ def signal_handler(signal, frame):
 
 if __name__ == "__main__":
     print('Запускаем шедулеры')
-    # print(app.config)
     signal.signal(signal.SIGINT, signal_handler)
 
     scheduler = APScheduler()
