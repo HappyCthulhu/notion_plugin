@@ -26,7 +26,7 @@ class TestCollectPagesForRemoving:
     def test_notion_connection(self):
         with allure.step('Устанавливаем connection c Notion'):
             client = NotionClient(token_v2=os.environ.get('TOKEN'))
-            page = client.get_block('https://www.notion.so/gazarov/0fe33ef038ba4ba489e4c6ab9b6430ee')
+            page = client.get_block(os.environ['LINK'])
             assert page
 
     @allure.id("5")
@@ -49,10 +49,9 @@ class TestCollectPagesForRemoving:
 
     # TODO: приделать неавтоматическую фикстуру, которая устанавливает connection с дб
     @allure.title("Скрипт удаляет закладку, которой нет в БД")
-    def test_script_delete_bookmark_that_doesnt_exist_in_db(self):
+    def test_script_delete_bookmark_that_doesnt_exist_in_db(self, title):
         with allure.step('Создаем тестовую запись в new_pages'):
             time_ = datetime.now()
-            title = rand.randstr(True, length=15)
             link = f'https://{rand.randstr(True, length=15)}.com'
 
             db.session.add(NewNotionPages(title=title, link=link, created_time=time_, last_edited_time=time_))
@@ -72,10 +71,9 @@ class TestCollectPagesForRemoving:
             logger.debug('Тестовая запись была успешно удалена из закладок')
 
     @allure.title("Кейс удаленная notion-page: скрипт удаляет записи в БД, которых нет в Notion")
-    def test_script_delete_record_about_non_existing_notion_page_from_db(self):
+    def test_script_delete_record_about_non_existing_notion_page_from_db(self, title):
         with allure.step('Создаем тестовую запись в all_notion_pages'):
             time_ = datetime.now()
-            title = rand.randstr(True, length=15)
             link = f'https://{rand.randstr(True, length=15)}.com'
             db.session.add(AllNotionPages(title=title, link=link,
                                           created_time=time_, last_edited_time=time_))
@@ -97,13 +95,9 @@ class TestCollectPagesForRemoving:
             logger.debug('Тестовая запись была успешно удалена из all_notion_pages')
 
     @allure.title("Проверка удаления страницы")
-    def test_script_delete_from_db_deleted_in_notion_page(self):
-        with allure.step('Устанавливаем connection c Notion'):
-            client = NotionClient(token_v2=os.environ.get('TOKEN'))
-
+    def test_script_delete_from_db_deleted_in_notion_page(self, client, title):
         with allure.step('Создаем запись в Notion'):
-            title = rand.randstr(True, length=15)
-            page = client.get_block('https://www.notion.so/gazarov/0fe33ef038ba4ba489e4c6ab9b6430ee')
+            page = client.get_block(os.environ['LINK'])
             new_page = page.children.add_new(PageBlock, title=title)
             logger.debug('Тестовая запись была создана в Notion')
 
@@ -119,7 +113,21 @@ class TestCollectPagesForRemoving:
         with allure.step('Ждем, пока удалится из all_notion_pages'):
             logger.debug('Ждем удаления тестовой запсии из all_notion_page')
             assert wait_until_not(check_present_of_record_in_db_all_notion_pages, title, 1,
-                                  600), 'Тестовая закладка не была найдена'
+                                  600), 'Тестовая страница не была найдена в БД'
 
-# TODO: cделать тест на успешное переименованных страниц
-# TODO: найти и заменить все токены и прочие штуки, которые должны быть заменены на переменные среды
+    @allure.title("Переименование страницы")
+    def test_script_catch_renamed_page(self, title, page, client):
+        with allure.step('Ждем, пока она появится в all_notion_pages'):
+            wait_until(find_bookmark_by_title, title, 0.1, 600), 'Тестовая закладка не была найдена'
+            logger.debug('Тестовая запись присутствует в all_notion_pages')
+
+        with allure.step('Переименовываем страницу'):
+            new_page_link = page.get_browseable_url()
+            page = client.get_block(new_page_link)
+            new_title = rand.randstr(True, length=15)
+            page.title = new_title
+
+        with allure.step('Ждем, пока переименованная запись появится в all_notion_pages'):
+            logger.debug('Ждем появления тестовой записи в all_notion_page')
+            assert wait_until(check_present_of_record_in_db_all_notion_pages, new_title, 1,
+                              600), 'Переименованная тестовая страница не была найдена в БД'
