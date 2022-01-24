@@ -4,7 +4,9 @@ import os
 import psycopg2
 from notifiers import get_notifier
 
+from app import db
 from logging_settings import set_logger
+from models import AllNotionPages, BookmarksForRemove
 from parse_bookmarks import parse_bookmarks
 
 
@@ -67,21 +69,10 @@ def get_bookmarks_ids_of_deleted_pages(notion_pages, bookmarks):
     return deleted_pages_ids
 
 
-def get_conn_and_cursor():
-    # TODO: тут какой-то трабл с переменными среды. Нужно поправить
-    conn = psycopg2.connect(host='127.0.0.1', user='postgres', password='12345', dbname='notion_plugin')
-    # conn = psycopg2.connect(host=os.environ['DB_HOST_NAME'], user=os.environ['DB_USER_NAME'], password=os.environ['DB_PASSWORD'], dbname=os.environ['DB_NAME'])
-    cursor = conn.cursor()
-    return conn, cursor
 
 
 def collect_pages_for_removing():
-    conn, cursor = get_conn_and_cursor()
-
-    cursor.execute(f"SELECT title, link FROM all_notion_pages;")
-
-    notion_pages = [{'title': page[0], 'page_url': page[1]} for page in cursor.fetchall()]
-
+    notion_pages = [{'title': page.title, 'page_url': page.link} for page in AllNotionPages.query.all()]
     chrome_bookmarks = parse_bookmarks()
 
     # 1: если заметка была удалена в Notion: вся информация о закладке есть в браузере, но нет в списке страниц Notion)
@@ -92,16 +83,11 @@ def collect_pages_for_removing():
 
     ids_for_removing = (*deleted_pages_ids, *duplicated_bookmarks_ids)
 
+    # TODO: проверить работу
     for id in ids_for_removing:
-        cursor.execute(
-            f"INSERT INTO bookmarks_for_remove (bookmark_id) VALUES ('{id}')")
-        conn.commit()
+        db.session.add(BookmarksForRemove(bookmark_id=id))
 
     logger.debug('Finished collecting pages for removing')
 
 
 logger = set_logger()
-
-# TODO: все это нужно удалить позже
-# all_notion_pages_fp = 'all_notion_pages.json'
-# pages_for_removing_fp = 'pages_for_removing.json'
