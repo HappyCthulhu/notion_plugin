@@ -1,21 +1,11 @@
-import json
 import os
 
-import psycopg2
 from notifiers import get_notifier
 
 from app import db
 from logging_settings import set_logger
 from models import AllNotionPages, BookmarksForRemove
 from parse_bookmarks import parse_bookmarks
-
-
-# 2: переименование заметки (перенос заметки в другое место) (url идентичен, меняется имя)
-## удаляем заметку с этим url
-## добавляем новую заметку
-
-# TODO: сделать одно соединение с ДБ для всех файлов
-# TODO: написать тесты к этой всей красоте
 
 
 def get_duplicated_bookmarks_ids(bookmarks):
@@ -29,7 +19,6 @@ def get_duplicated_bookmarks_ids(bookmarks):
             filter(lambda elem: elem['title'] == bookmark['title'] and elem['page_url'] == bookmark['page_url'],
                    bookmarks))
 
-        # TODO: переделать в кортеж, если возможно
         duplicates_ids = [duplicate['id'] for duplicate in duplicates]
         if len(duplicates) > 1:
             telegram = get_notifier('telegram')
@@ -50,7 +39,6 @@ def get_duplicated_bookmarks_ids(bookmarks):
 
 
 def get_bookmarks_ids_of_deleted_pages(notion_pages, bookmarks):
-
     notion_pages_links = [notion_page['page_url'] for notion_page in notion_pages]
     deleted_pages = []
 
@@ -69,8 +57,6 @@ def get_bookmarks_ids_of_deleted_pages(notion_pages, bookmarks):
     return deleted_pages_ids
 
 
-
-
 def collect_pages_for_removing():
     notion_pages = [{'title': page.title, 'page_url': page.link} for page in AllNotionPages.query.all()]
     chrome_bookmarks = parse_bookmarks()
@@ -83,11 +69,12 @@ def collect_pages_for_removing():
 
     ids_for_removing = (*deleted_pages_ids, *duplicated_bookmarks_ids)
 
-    # TODO: проверить работу
     for id in ids_for_removing:
         db.session.add(BookmarksForRemove(bookmark_id=id))
+        db.session.commit()
 
     logger.debug('Finished collecting pages for removing')
 
 
 logger = set_logger()
+collect_pages_for_removing()
