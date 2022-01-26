@@ -77,4 +77,3 @@ def collect_pages_for_removing():
 
 
 logger = set_logger()
-collect_pages_for_removing()
