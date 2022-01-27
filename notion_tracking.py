@@ -6,14 +6,12 @@ import psycopg2 as psycopg2
 from notifiers import get_notifier
 from notion.block import PageBlock
 from notion.client import NotionClient
-from sqlalchemy import and_
 from requests.exceptions import HTTPError
+from sqlalchemy import and_
 
 from app import db
 from collect_pages_for_removing import logger
 from models import AllNotionPages, NewNotionPages
-
-
 
 
 def timestamp_to_datetime(timestamp):
@@ -79,45 +77,69 @@ def collect_pages(block, depth=0):
         if child.type in ["page", "collection"]:
             collect_pages(child, depth=depth + 1)
 
+def not_changed_page(current_page):
+    first_founded_page = db.session.query(AllNotionPages).filter(
+        and_(AllNotionPages.link == current_page['page_url'],
+             AllNotionPages.title == current_page['title'])).first()
 
-def process_renamed_and_new_pages(path):
+    if first_founded_page:
+        first_founded_page.last_edited_time = current_page['last_edited_time']
+        db.session.commit()
+        return True
+
+def new_page(current_page):
+    exist_in_db = db.session.query(AllNotionPages).filter(
+        and_(AllNotionPages.link == current_page['page_url'], AllNotionPages.title == current_page['title'])).all()
+
+    if not exist_in_db:
+        title = current_page['title']
+        link = current_page['page_url']
+        created_time = current_page['created_time']
+        last_edited_time = current_page['last_edited_time']
+
+        telegram.notify(
+            message=current_page['title'], token=os.environ['TELEGRAM_KEY'], chat_id=os.environ['TELEGRAM_CHAT_ID'])
+
+        db.session.add(NewNotionPages(title=title, link=link, created_time=created_time,
+                                      last_edited_time=last_edited_time))
+
+        db.session.add(AllNotionPages(title=title, link=link, created_time=created_time,
+                                      last_edited_time=last_edited_time))
+        db.session.commit()
+        return True
+
+def renamed_page(current_page):
+    renamed_page = db.session.query(AllNotionPages).filter(and_(AllNotionPages.link == current_page['page_url'],
+                                                                AllNotionPages.title != current_page[
+                                                                    'title'])).all()
+
+    if renamed_page:
+        renamed_page = db.session.query(AllNotionPages).filter(and_(AllNotionPages.link == current_page['page_url'],
+                                                                    AllNotionPages.title != current_page[
+                                                                        'title'])).first()
+        # this commit is needed, because link column consist unique values (script will try 2 push non-uniq value of renamed page without this commit)
+        renamed_page.last_edited_time = current_page['last_edited_time']
+        # TODO: здесь нужно created_time?
+        renamed_page.title = current_page['title']
+        db.session.commit()
+        return True
+
+
+def process_existing_in_notion_pages(path):
     for current_page in path:
-
-        # delete renamed_pages
-        db.session.query(AllNotionPages).filter(and_(AllNotionPages.link == current_page['page_url'],
-                                                     AllNotionPages.title != current_page['title'])).delete()
-        page_with_same_title_and_link_exist_in_db = db.session.query(AllNotionPages).filter(
-            and_(AllNotionPages.link == current_page['page_url'], AllNotionPages.title == current_page['title'])).all()
-
-        # this commit is needed, because link column consist unique values
-        db.session.commit()
-
-        # check if page didnt exist in db at all
-        if not page_with_same_title_and_link_exist_in_db:
-            title = current_page['title']
-            link = current_page['page_url']
-            created_time = current_page['created_time']
-            last_edited_time = current_page['last_edited_time']
-
-            telegram.notify(
-                message=current_page['title'], token=os.environ['TELEGRAM_KEY'], chat_id=os.environ['TELEGRAM_CHAT_ID'])
-
-            db.session.add(NewNotionPages(title=title, link=link, created_time=created_time,
-                                          last_edited_time=last_edited_time))
-
-            db.session.add(AllNotionPages(title=title, link=link, created_time=created_time,
-                                          last_edited_time=last_edited_time))
-            # TODO: повторения этого удалить:
-
-
-        # if page existed, just change her value in column "last edited time"
+        if not_changed_page(current_page):
+            continue
+        # important order: first - renamed_page func, than new_page
+        elif renamed_page(current_page):
+            continue
+        elif new_page(current_page):
+            continue
         else:
-            first_founded_page = db.session.query(AllNotionPages).filter(
-                and_(AllNotionPages.link == current_page['page_url'],
-                     AllNotionPages.title == current_page['title'])).first()
-            first_founded_page.last_edited_time = current_page['last_edited_time']
+            logger.critical('Some weird shit happend. But u will find out very quick, i promise!')
+            sys.exit()
 
-        db.session.commit()
+
+
 
 def delete_in_db_deleted_notion_pages(all_current_pages):
     # в БД есть запись с таким же url, но другим названием: удаляем из БД, добавляем новую запись
@@ -132,9 +154,9 @@ def delete_in_db_deleted_notion_pages(all_current_pages):
             db.session.query(AllNotionPages).filter(AllNotionPages.link == old_link).delete()
             db.session.commit()
 
+
 def notion_tracking():
     logger.debug('Start tracking Notion')
-
 
     try:
         client = NotionClient(token_v2=os.environ.get('TOKEN'))
@@ -150,17 +172,16 @@ def notion_tracking():
     global path
     path = []
 
-
-    # TODO: корневые страницы не добавляются в Notion???
     for block in child_pages:
         collect_pages(block)
 
     delete_in_db_deleted_notion_pages(path)
-    process_renamed_and_new_pages(path)
+    process_existing_in_notion_pages(path)
     logger.debug('Finished tracking Notion')
 
 
 # TODO: не стоит ли подтягивать в ДБ all_notion_pages те страницы, что были найдены в дб new_pages? А то сейчас это иначе происходит
 telegram = get_notifier('telegram')
-# TODO: мб стоит прихуярить логгирование к переименованным и удаленным страницам?
+# TODO: мб стоит прихуярить логгирование к переименованным и удаленным страницам? Разве это не сделано?
 # TODO: проверяю ли я где-то перед добавлянием новой страницы в букмарки, нет ли ее в букмарках случаем?
+# TODO: сделать интеграционный тест для дублирования закладок. Пока непонятно, как. Это ж нужно через сервак делать
