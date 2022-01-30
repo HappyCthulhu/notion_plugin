@@ -11,3 +11,9 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config.from_object(os.environ['APP_SETTINGS'])
 
 db = SQLAlchemy(app)
+
+from flask_migrate import Migrate
+
+migrate = Migrate(app, db)
+
+import models
