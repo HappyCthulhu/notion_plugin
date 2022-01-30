@@ -21,6 +21,7 @@ pytest-env = "^0.6.2"
 Flask-SQLAlchemy = "^2.5.1"
 mimesis = "^5.2.1"
 psycopg2 = "^2.9.3"
+Flask-Migrate = "^3.1.0"
 
 [tool.poetry.dev-dependencies]
 
