@@ -1,3 +1,5 @@
+from sqlalchemy import Column
+
 from app import db
 
 
@@ -26,8 +28,7 @@ class AllNotionPages(BaseModel):
                          db.UniqueConstraint('link'),
                      ),
     __tablename__ = 'all_notion_pages'
-    link = db.Column('link', db.String())
-    db.UniqueConstraint(link, name='shit')
+    link = Column('link')
 
 
 class NewNotionPages(BaseModel):
