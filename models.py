@@ -1,4 +1,6 @@
 from app import db
+from sqlalchemy import UniqueConstraint
+
 
 class BaseModel(db.Model):
     __abstract__ = True
@@ -22,7 +24,8 @@ class BaseModel(db.Model):
 
 class AllNotionPages(BaseModel):
     __tablename__ = 'all_notion_pages'
-    link = db.Column('link', db.String(), unique=True, nullable=False)
+    link = db.Column('link', db.String())
+    UniqueConstraint(link, name='shit')
 
 
 class NewNotionPages(BaseModel):
