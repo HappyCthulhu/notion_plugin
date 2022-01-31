@@ -1,13 +1,11 @@
 from app import db
 
-
 class BaseModel(db.Model):
     __abstract__ = True
 
     title = db.Column('title', db.String())
-    link = db.Column('link', db.String())
-    created_time = db.Column('created_time', db.DateTime)
-    last_edited_time = db.Column('last_edited_time', db.DateTime)
+    created_time = db.Column('created_time', db.DateTime, nullable=False)
+    last_edited_time = db.Column('last_edited_time', db.DateTime, nullable=False)
 
     page_id = db.Column('page_id', db.Integer, primary_key=True)
 
@@ -19,16 +17,17 @@ class BaseModel(db.Model):
     #     self.last_edited_time = last_edited_time
     #
     def __repr__(self):
-        return self.title
+        return f'page: {self.title}'
 
 
 class AllNotionPages(BaseModel):
     __tablename__ = 'all_notion_pages'
+    link = db.Column('link', db.String(), unique=True, nullable=False)
 
 
 class NewNotionPages(BaseModel):
     __tablename__ = 'new_pages'
-
+    link = db.Column('link', db.String(), unique=True, nullable=False)
 
 class BookmarksForRemove(db.Model):
     __tablename__ = 'bookmarks_for_remove'
