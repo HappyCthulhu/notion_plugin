@@ -24,11 +24,8 @@ class BaseModel(db.Model):
 
 
 class AllNotionPages(BaseModel):
-    __table_args__ = (
-                         db.UniqueConstraint('link'),
-                     ),
     __tablename__ = 'all_notion_pages'
-    link = Column('link')
+    link = Column('link', unique=True)
 
 
 class NewNotionPages(BaseModel):
