@@ -32,7 +32,7 @@ class NewNotionPages(BaseModel):
 class BookmarksForRemove(db.Model):
     __tablename__ = 'bookmarks_for_remove'
 
-    bookmark_id = db.Column('bookmark_id', db.String())
+    bookmark_id = db.Column('bookmark_id', db.String(), unique=True, nullable=False)
     primary_id = db.Column('primary_id', db.Integer, primary_key=True)
 
     def __repr__(self):
