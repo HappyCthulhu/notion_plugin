@@ -1,5 +1,4 @@
 from app import db
-from sqlalchemy import UniqueConstraint
 
 
 class BaseModel(db.Model):
@@ -23,14 +22,18 @@ class BaseModel(db.Model):
 
 
 class AllNotionPages(BaseModel):
+    __table_args__ = (
+                         db.UniqueConstraint('link'),
+                     ),
     __tablename__ = 'all_notion_pages'
     link = db.Column('link', db.String())
-    UniqueConstraint(link, name='shit')
+    db.UniqueConstraint(link, name='shit')
 
 
 class NewNotionPages(BaseModel):
     __tablename__ = 'new_pages'
     link = db.Column('link', db.String(), unique=True, nullable=False)
+
 
 class BookmarksForRemove(db.Model):
     __tablename__ = 'bookmarks_for_remove'
