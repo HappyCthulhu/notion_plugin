@@ -17,6 +17,7 @@ from some_tests.unit_tests.test_data.test_data import BookmarksDontContainsFewNo
 rand = Random()
 
 
+# TODO: сделать интеграционный тест для дублирования закладок
 # TODO: создать классы, в которых будут содержаться данные для тестов (json-ны, например). Каждый аргумент класса (DataForTest.notion_page_was_deleted) должен возвращать bookmark, notion_pages с содажранием, соответствующим названию аргумента
 # TODO: создать миграции для БД
 # TODO: Может тестовые данные запихнуть в БД и создать правила их наполнения для conftest? фикстуры не обязательно должны применяться автоматически
@@ -115,10 +116,17 @@ class TestCollectPagesForRemoving:
             assert wait_until_not(check_present_of_record_in_db_all_notion_pages, title, 1,
                                   600), 'Тестовая страница не была найдена в БД'
 
+    import pytest
+    @pytest.mark.debug
+    @allure.title("Создание новой страницы")
+    def test_script_catch_new_page(self, title, page, client):
+        with allure.step('Ждем, пока она появится в all_notion_pages'):
+            assert wait_until(find_bookmark_by_title, title, 0.1, 600), 'Тестовая страница не была найдена'
+
     @allure.title("Переименование страницы")
     def test_script_catch_renamed_page(self, title, page, client):
         with allure.step('Ждем, пока она появится в all_notion_pages'):
-            wait_until(find_bookmark_by_title, title, 0.1, 600), 'Тестовая закладка не была найдена'
+            wait_until(find_bookmark_by_title, title, 0.1, 600), 'Тестовая страница не была найдена'
             logger.debug('Тестовая запись присутствует в all_notion_pages')
 
         with allure.step('Переименовываем страницу'):
@@ -131,3 +139,5 @@ class TestCollectPagesForRemoving:
             logger.debug('Ждем появления тестовой записи в all_notion_page')
             assert wait_until(check_present_of_record_in_db_all_notion_pages, new_title, 1,
                               600), 'Переименованная тестовая страница не была найдена в БД'
+
+# TODO: тест проверки обновления даты существующей записи
