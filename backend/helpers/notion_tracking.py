@@ -2,27 +2,19 @@ import os
 import sys
 from datetime import datetime
 
-import psycopg2 as psycopg2
 from notifiers import get_notifier
 from notion.block import PageBlock
 from notion.client import NotionClient
 from requests.exceptions import HTTPError
 from sqlalchemy import and_
 
-from app import db
-from collect_pages_for_removing import logger
-from models import AllNotionPages, NewNotionPages
+from app import celery
+from backend.helpers.logger_settings import logger
+from backend.models import db, AllNotionPages, NewNotionPages
 
 
 def timestamp_to_datetime(timestamp):
     return datetime.fromtimestamp(float(str(timestamp)[0:-3]))
-
-
-def get_conn_and_cursor():
-    conn = psycopg2.connect(host=os.environ['DB_HOST_NAME'], user=os.environ['DB_USER_NAME'],
-                            password=os.environ['DB_PASSWORD'], dbname=os.environ['DB_NAME'])
-    cursor = conn.cursor()
-    return conn, cursor
 
 
 def get_childs(page):
@@ -77,6 +69,7 @@ def collect_pages(block, depth=0):
         if child.type in ["page", "collection"]:
             collect_pages(child, depth=depth + 1)
 
+
 def not_changed_page(current_page):
     first_founded_page = db.session.query(AllNotionPages).filter(
         and_(AllNotionPages.link == current_page['page_url'],
@@ -87,26 +80,37 @@ def not_changed_page(current_page):
         db.session.commit()
         return True
 
+
 def new_page(current_page):
     exist_in_db = db.session.query(AllNotionPages).filter(
         and_(AllNotionPages.link == current_page['page_url'], AllNotionPages.title == current_page['title'])).all()
 
     if not exist_in_db:
+
         title = current_page['title']
         link = current_page['page_url']
         created_time = current_page['created_time']
         last_edited_time = current_page['last_edited_time']
 
-        telegram.notify(
-            message=current_page['title'], token=os.environ['TELEGRAM_KEY'], chat_id=os.environ['TELEGRAM_CHAT_ID'])
+        logger.info(f'Страницы нет в AllNotionPages. Добавляю страницу: \n{title} | {link}')
 
-        db.session.add(NewNotionPages(title=title, link=link, created_time=created_time,
-                                      last_edited_time=last_edited_time))
+        # TODO: потом раскомментить
+        # telegram.notify(
+        #     message=current_page['title'], token=os.environ['TELEGRAM_KEY'], chat_id=os.environ['TELEGRAM_CHAT_ID'])
 
-        db.session.add(AllNotionPages(title=title, link=link, created_time=created_time,
-                                      last_edited_time=last_edited_time))
-        db.session.commit()
+        try:
+            db.session.add(NewNotionPages(title=title, link=link, created_time=created_time,
+                                          last_edited_time=last_edited_time))
+            db.session.commit()
+
+            db.session.add(AllNotionPages(title=title, link=link, created_time=created_time,
+                                          last_edited_time=last_edited_time))
+            # db.session.commit()
+        except Exception as e:
+            logger.critical(e)
+
         return True
+
 
 def renamed_page(current_page):
     renamed_page = db.session.query(AllNotionPages).filter(and_(AllNotionPages.link == current_page['page_url'],
@@ -139,8 +143,6 @@ def process_existing_in_notion_pages(path):
             sys.exit()
 
 
-
-
 def delete_in_db_deleted_notion_pages(all_current_pages):
     # в БД есть запись с таким же url, но другим названием: удаляем из БД, добавляем новую запись
     # БД содержит название и url заметки, которой нет в Notion: удаляем из БД
@@ -148,13 +150,14 @@ def delete_in_db_deleted_notion_pages(all_current_pages):
     old_pages_links = [page.link for page in db.session.query(AllNotionPages).all()]
     for old_link in old_pages_links:
 
-        # БД содержит url заметки, котоой нет в notion
+        # БД содержит url заметки, которой нет в notion
         if old_link not in current_pages_links:
             logger.debug(f'Найдена запись в all_notion_pages, url которой нет Notion. Удаляю из БД: {old_link}')
             db.session.query(AllNotionPages).filter(AllNotionPages.link == old_link).delete()
             db.session.commit()
 
 
+@celery.task
 def notion_tracking():
     logger.debug('Start tracking Notion')
 
@@ -177,6 +180,8 @@ def notion_tracking():
 
     delete_in_db_deleted_notion_pages(path)
     process_existing_in_notion_pages(path)
+    # TODO: потом удалить
+    db.session.commit()
     logger.debug('Finished tracking Notion')
 
 
@@ -185,3 +190,4 @@ telegram = get_notifier('telegram')
 # TODO: мб стоит прихуярить логгирование к переименованным и удаленным страницам? Разве это не сделано?
 # TODO: проверяю ли я где-то перед добавлянием новой страницы в букмарки, нет ли ее в букмарках случаем?
 # TODO: сделать интеграционный тест для дублирования закладок. Пока непонятно, как. Это ж нужно через сервак делать
+# notion_tracking()

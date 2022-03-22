@@ -1,6 +1,9 @@
 import json
 import os
 
+from backend.helpers.logger_settings import logger
+
+
 # TODO: это может хреново работать, ибо должно вызываться всего раз за отработку цикл
 
 def get_first_stage():
@@ -9,6 +12,7 @@ def get_first_stage():
 
     first_stage = Bookmarks['roots']['bookmark_bar']['children']
     return first_stage
+
 
 # TODO: переименовать
 def find_folder(tree, depth=0):
@@ -48,7 +52,6 @@ def find_folder(tree, depth=0):
                 return debug
 
 
-
 def parse_bookmarks():
     with open(JSONIN, "r", encoding='utf-8') as f:
         Bookmarks = json.load(f)
@@ -56,10 +59,15 @@ def parse_bookmarks():
     first_stage = Bookmarks['roots']['bookmark_bar']['children']
     folder_data = find_folder(first_stage)
 
-    # TODO: почему key error "url" ошибка выдавала?
-    bookmarks = [{"title": children['name'], "page_url": children.get('url'), "id": children['id']} for children in
-                 folder_data['children'] if children.get('url')]
-    return bookmarks
+    try:
+        bookmarks = [{"title": children['name'], "page_url": children.get('url'), "id": children['id']} for children in
+                     folder_data['children'] if children.get('url')]
+
+        return bookmarks
+
+    except TypeError as e:
+        logger.critical('Возможно, ты неправильно указал id папки с закладками в переменных среды')
+        logger.debug(f'"error": {e}')
 
 
 JSONIN = os.environ['JSONIN']
