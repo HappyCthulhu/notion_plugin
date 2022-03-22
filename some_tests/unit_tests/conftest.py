@@ -47,7 +47,7 @@ def create_page_titles(client, title):
     with allure.step('Создаем запись в Notion'):
         page = client.get_block(os.environ['LINK'])
         new_page = page.children.add_new(PageBlock, title=title)
-        logger.debug('Тестовая запись была создана в Notion')
+        logger.debug(f'Создана новая страница. Название: {title}')
         yield new_page
 
         new_page.remove()
