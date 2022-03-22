@@ -2,8 +2,8 @@ import time
 from datetime import datetime
 
 from app import db
-from models import AllNotionPages
-from parse_bookmarks import parse_bookmarks
+from backend.models import AllNotionPages
+from backend.helpers.parse_bookmarks import parse_bookmarks
 
 
 def check_present_of_record_in_db_all_notion_pages(title):
