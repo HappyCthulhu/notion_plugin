@@ -1,8 +1,11 @@
 import os
+
 basedir = os.path.abspath(os.path.dirname(__file__))
 
 
 class Config(object):
+    CELERY_BROKER_URL = os.environ['CELERY_BROKER_URL']
+    CELERY_RESULT_BACKEND =os.environ['CELERY_RESULT_BACKEND']
     DEBUG = False
     TESTING = False
     CSRF_ENABLED = True
