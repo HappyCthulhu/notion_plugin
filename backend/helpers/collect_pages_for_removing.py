@@ -75,6 +75,7 @@ def collect_pages_for_removing():
 
     ids_for_removing = (*deleted_pages_ids, *duplicated_bookmarks_ids)
 
+    # TODO: проверить, нужно ли это вообще
     for id in ids_for_removing:
         if db.session.query(BookmarksForRemove).filter(BookmarksForRemove.bookmark_id == id).all():
             time.sleep(20)
