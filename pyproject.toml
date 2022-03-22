@@ -24,6 +24,7 @@ psycopg2 = "^2.9.3"
 Flask-Migrate = "^3.1.0"
 SQLAlchemy-Utils = "^0.38.2"
 Flask-RESTful = "^0.3.9"
+celery = "^5.2.3"
 
 [tool.poetry.dev-dependencies]
 
