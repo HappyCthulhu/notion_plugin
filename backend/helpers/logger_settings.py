@@ -31,7 +31,7 @@ def set_logger():
     logger.add(sys.stderr, format=logger_format_debug, level='DEBUG', filter=debug_only)
     logger.add(sys.stderr, format=logger_format_info, level='INFO', filter=info_only)
     logger.add(sys.stderr, format=logger_format_critical, level='CRITICAL', filter=critical_only)
-    logger.add(Path('logging_dir', 'log.txt'), encoding='utf-8')
+    logger.add(Path('../../logging_dir', 'log.txt'), encoding='utf-8')
 
     return logger
 
@@ -43,9 +43,11 @@ def my_exception_hook(type, value, tb):
                 f"Traceback: {traceback_details}"
 
 
-    with open(Path('logging_dir', 'unexpected_exception.txt'), 'a', encoding='utf-8') as log_file:
+    with open(Path('../../logging_dir', 'unexpected_exception.txt'), 'a', encoding='utf-8') as log_file:
         log_file.write(error_msg)
 
     raise error_msg
     # logger.critical(error_msg)
     # TODO: потюнить вывод непредсказуемой ошибки
+
+logger = set_logger()
