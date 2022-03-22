@@ -3,36 +3,36 @@ chrome.runtime.onInstalled.addListener(() => {
 });
 
 chrome.alarms.onAlarm.addListener((alarm) => {
-    function helloWorld() {
-        console.log("Hello, world!");
-    }
 
     function removeBookmarks(ids) {
-        ids.forEach(function (id, ids) {
-            console.log("removeBookmark work!");
+        ids.forEach(function (id) {
+            chrome.bookmarks.remove(id['bookmark_id']);
 
-            var bookmarkId = id;
-            var removingBookmark = chrome.bookmarks.remove(bookmarkId);
         });
         console.log("Страницы успешно удалены");
-
-    }
+}
 
     const createBookmarks = (requestText) => {
 
-        requestText.forEach(function (item, requestText) {
-            console.log("item", item)
+        requestText.forEach(function (notion_page) {
+            console.log("notion_page", notion_page)
             chrome.bookmarks.create({
-                'parentId': '2279',
-                'title': item.title,
-                'url': item.page_url,
+                'parentId': '189',
+                'title': notion_page.title,
+                'url': notion_page.link,
             });
         });
     }
 
     let timerId = setInterval(async () => {
-
-        let response = await fetch("http://127.0.0.1:5000/add");
+// {
+//     "title": "test",
+//     "link": "https://vk.com",
+//     "last_edited_time": "2022-03-19T16:55:16",
+//     "created_time": "2022-03-19T16:55:15",
+//     "page_id": 4
+// }
+        let response = await fetch("http://127.0.0.1:5000/pages/add");
         let requestText = await response.json()
         console.log("requestText", requestText)
 
@@ -46,12 +46,12 @@ chrome.alarms.onAlarm.addListener((alarm) => {
         }
 
 
-        let remove_response = await fetch("http://127.0.0.1:5000/remove");
+        let remove_response = await fetch("http://127.0.0.1:5000/pages/remove");
         let remove_requestText = await remove_response.json()
         console.log("remove_requestText", remove_requestText)
 
 
-        if (Object.keys(remove_requestText).length === 0) {
+        if (remove_requestText.length === 0) {
             console.log("Новых страниц для удаления нет");
 
         } else {
@@ -60,7 +60,6 @@ chrome.alarms.onAlarm.addListener((alarm) => {
         }
 
 
-        console.log('It worked!');
     }, 2000);
 
 });
