@@ -1,23 +1,20 @@
 import sys
-from loguru import logger
-from pathlib import Path
 import traceback
+from pathlib import Path
+
+from loguru import logger as loguru_logger
 
 
 def set_logger():
-    logger.remove()
+    loguru_logger.remove()
 
-    # настраиваем логгирование
     def debug_only(record):
-        # dump_log_in_file(record)
         return record["level"].name == "DEBUG"
 
     def critical_only(record):
-        # dump_log_in_file(record)
         return record["level"].name == "CRITICAL"
 
     def info_only(record):
-        # dump_log_in_file(record)
         return record["level"].name == "INFO"
 
     logger_format_debug = "<green>{time:DD-MM-YY HH:mm:ss}</> | <bold><blue>{level}</></> | " \
@@ -28,26 +25,32 @@ def set_logger():
                              "<cyan>{file}:{function}:{line}</> | <fg 255,255,255><RED>{message}</></> | " \
                              "<RED><fg 255,255,255>❌</></>"
 
-    logger.add(sys.stderr, format=logger_format_debug, level='DEBUG', filter=debug_only)
-    logger.add(sys.stderr, format=logger_format_info, level='INFO', filter=info_only)
-    logger.add(sys.stderr, format=logger_format_critical, level='CRITICAL', filter=critical_only)
-    logger.add(Path('../../logging_dir', 'log.txt'), encoding='utf-8')
+    loguru_logger.add(sys.stderr, format=logger_format_debug, level='DEBUG', filter=debug_only)
+    loguru_logger.add(sys.stderr, format=logger_format_info, level='INFO', filter=info_only)
+    loguru_logger.add(sys.stderr, format=logger_format_critical, level='CRITICAL', filter=critical_only)
+    # sys.path[1] returns root dir of project
+    loguru_logger.add(Path(logging_dp, 'file.log'), level='DEBUG')
+    loguru_logger.add(Path(logging_dp, 'file.log'), level='INFO')
+    loguru_logger.add(Path(logging_dp, 'file.log'), level='CRITICAL')
 
-    return logger
+    return loguru_logger
+
 
 def my_exception_hook(type, value, tb):
     traceback_details = '\n'.join(traceback.extract_tb(tb).format())
-    error_msg = "Все сломалось\n" \
+    error_msg = "Непредсказуемая ошибка:\n" \
                 f"Type: {type}\n" \
                 f"Value: {value}\n" \
-                f"Traceback: {traceback_details}"
+                f"Traceback: {traceback_details}" \
+                f"______________________________\n"
 
-
-    with open(Path('../../logging_dir', 'unexpected_exception.txt'), 'a', encoding='utf-8') as log_file:
+    with open(Path(logging_dp, 'unexpected_exceptions.log'), 'a', encoding='utf-8') as log_file:
         log_file.write(error_msg)
 
     raise error_msg
-    # logger.critical(error_msg)
-    # TODO: потюнить вывод непредсказуемой ошибки
 
+
+# sys.excepthook нужно для отлова непредсказуемых ошибок
+sys.excepthook = my_exception_hook
+logging_dp = Path(sys.path[1], 'logging_dir')
 logger = set_logger()
