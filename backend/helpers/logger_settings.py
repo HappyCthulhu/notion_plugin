@@ -1,3 +1,4 @@
+import os
 import sys
 import traceback
 from pathlib import Path
@@ -28,10 +29,9 @@ def set_logger():
     loguru_logger.add(sys.stderr, format=logger_format_debug, level='DEBUG', filter=debug_only)
     loguru_logger.add(sys.stderr, format=logger_format_info, level='INFO', filter=info_only)
     loguru_logger.add(sys.stderr, format=logger_format_critical, level='CRITICAL', filter=critical_only)
-    # sys.path[1] returns root dir of project
-    loguru_logger.add(Path(logging_dp, 'file.log'), level='DEBUG')
-    loguru_logger.add(Path(logging_dp, 'file.log'), level='INFO')
-    loguru_logger.add(Path(logging_dp, 'file.log'), level='CRITICAL')
+    loguru_logger.add(Path(logging_dp, 'file.log'), level='DEBUG', rotation='5 MB')
+    loguru_logger.add(Path(logging_dp, 'file.log'), level='INFO', rotation='5 MB')
+    loguru_logger.add(Path(logging_dp, 'file.log'), level='CRITICAL', rotation='5 MB')
 
     return loguru_logger
 
@@ -44,13 +44,18 @@ def my_exception_hook(type, value, tb):
                 f"Traceback: {traceback_details}" \
                 f"______________________________\n"
 
-    with open(Path(logging_dp, 'unexpected_exceptions.log'), 'a', encoding='utf-8') as log_file:
-        log_file.write(error_msg)
+    if Path(logging_dp, 'unexpected_exceptions.log').is_file():
+        with open(Path(logging_dp, 'unexpected_exceptions.log'), 'a', encoding='utf-8') as log_file:
+            log_file.write(error_msg)
+    else:
+        with open(Path(logging_dp, 'unexpected_exceptions.log'), 'w', encoding='utf-8') as log_file:
+            log_file.write(error_msg)
+
 
     raise error_msg
 
 
 # sys.excepthook нужно для отлова непредсказуемых ошибок
 sys.excepthook = my_exception_hook
-logging_dp = Path(sys.path[1], 'logging_dir')
+logging_dp = Path(os.environ['ROOT_PATH_DIR'], 'logging_dir')
 logger = set_logger()
