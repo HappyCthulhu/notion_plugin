@@ -113,18 +113,18 @@ def new_page(current_page):
 
 
 def renamed_page(current_page):
-    renamed_page = db.session.query(AllNotionPages).filter(and_(AllNotionPages.link == current_page['page_url'],
-                                                                AllNotionPages.title != current_page[
-                                                                    'title'])).all()
+    renamed_page_ = db.session.query(AllNotionPages).filter(and_(AllNotionPages.link == current_page['page_url'],
+                                                                 AllNotionPages.title != current_page[
+                                                                     'title'])).all()
 
-    if renamed_page:
-        renamed_page = db.session.query(AllNotionPages).filter(and_(AllNotionPages.link == current_page['page_url'],
-                                                                    AllNotionPages.title != current_page[
-                                                                        'title'])).first()
+    if renamed_page_:
+        renamed_page_ = db.session.query(AllNotionPages).filter(and_(AllNotionPages.link == current_page['page_url'],
+                                                                     AllNotionPages.title != current_page[
+                                                                         'title'])).first()
         # this commit is needed, because link column consist unique values (script will try 2 push non-uniq value of renamed page without this commit)
-        renamed_page.last_edited_time = current_page['last_edited_time']
+        renamed_page_.last_edited_time = current_page['last_edited_time']
         # TODO: здесь нужно created_time?
-        renamed_page.title = current_page['title']
+        renamed_page_.title = current_page['title']
         db.session.commit()
         return True
 
@@ -190,4 +190,3 @@ telegram = get_notifier('telegram')
 # TODO: мб стоит прихуярить логгирование к переименованным и удаленным страницам? Разве это не сделано?
 # TODO: проверяю ли я где-то перед добавлянием новой страницы в букмарки, нет ли ее в букмарках случаем?
 # TODO: сделать интеграционный тест для дублирования закладок. Пока непонятно, как. Это ж нужно через сервак делать
-# notion_tracking()
