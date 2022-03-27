@@ -3,7 +3,7 @@ import os
 
 from notion.block import PageBlock
 
-from collect_pages_for_removing import logger
+from backend.helpers.collect_pages_for_removing import logger
 from mimesis.random import Random
 import allure
 import pytest
