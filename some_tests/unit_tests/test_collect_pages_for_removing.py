@@ -5,11 +5,12 @@ import allure
 from mimesis.random import Random
 from notion.block import PageBlock
 from notion.client import NotionClient
+from sqlalchemy.orm import scoped_session
 
-from app import db
-from collect_pages_for_removing import get_bookmarks_ids_of_deleted_pages, get_duplicated_bookmarks_ids
-from collect_pages_for_removing import logger
-from models import AllNotionPages, NewNotionPages
+from app import db, app
+from backend.helpers.collect_pages_for_removing import get_bookmarks_ids_of_deleted_pages, get_duplicated_bookmarks_ids
+from backend.helpers.logger_settings import logger
+from backend.models import AllNotionPages, NewNotionPages
 from some_tests.unit_tests.help_funcs_for_tests import wait_until, wait_until_not, find_bookmark_by_title, \
     check_present_of_record_in_db_all_notion_pages
 from some_tests.unit_tests.test_data.test_data import BookmarksDontContainsFewNotionPages
@@ -23,6 +24,8 @@ rand = Random()
 # TODO: Может тестовые данные запихнуть в БД и создать правила их наполнения для conftest? фикстуры не обязательно должны применяться автоматически
 
 class TestCollectPagesForRemoving:
+    session: scoped_session = db.session
+
     @allure.title("Проверка наличия connection")
     def test_notion_connection(self):
         with allure.step('Устанавливаем connection c Notion'):
@@ -55,11 +58,14 @@ class TestCollectPagesForRemoving:
             time_ = datetime.now()
             link = f'https://{rand.randstr(True, length=15)}.com'
 
-            db.session.add(NewNotionPages(title=title, link=link, created_time=time_, last_edited_time=time_))
-            db.session.commit()
+            # TODO: можно ли каким-то образом избавиться от app.app_context?
+            with app.app_context():
+                db.session.add(NewNotionPages(title=title, link=link, created_time=time_, last_edited_time=time_))
+                db.session.commit()
 
         with allure.step('Проверяем, что заметка присутствует в таблице'):
-            result = db.session.query(NewNotionPages).filter_by(link=link).all()
+            with app.app_context():
+                result = db.session.query(NewNotionPages).filter_by(link=link).all()
             assert result
             logger.debug('Запись добавлена в таблицу new_pages')
 
@@ -76,14 +82,16 @@ class TestCollectPagesForRemoving:
         with allure.step('Создаем тестовую запись в all_notion_pages'):
             time_ = datetime.now()
             link = f'https://{rand.randstr(True, length=15)}.com'
-            db.session.add(AllNotionPages(title=title, link=link,
-                                          created_time=time_, last_edited_time=time_))
-            logger.debug(f'title: {title}')
-            logger.debug(f'link: {link}')
-            db.session.commit()
+            with app.app_context():
+                db.session.add(AllNotionPages(title=title, link=link,
+                                              created_time=time_, last_edited_time=time_))
+                db.session.commit()
+                logger.debug(f'title: {title}')
+                logger.debug(f'link: {link}')
 
         with allure.step('Проверяем, что она присутствует в БД'):
-            assert db.session.query(AllNotionPages).filter_by(title=title).all()
+            with app.app_context():
+                assert db.session.query(AllNotionPages).filter_by(title=title).all()
             logger.debug('Тестовая запись добавлена в all_notion_pages')
 
         with allure.step('Проверяем, что она пропала из БД'):
