@@ -1,8 +1,10 @@
-from flask_marshmallow import Marshmallow
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import Column, String, DateTime, Integer
+
 # from app import app
 db = SQLAlchemy()
+
+
 # ma = Marshmallow()
 
 # наследует от db.Model, чтоб оно могло передать инфу в миграции
