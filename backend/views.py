@@ -58,7 +58,7 @@ class RemoveBookmarks(Resource):
             bookmarks_for_remove: list = BookmarksForRemove.query.all()
 
             if bookmarks_for_remove:
-                # TODO: проверить, передает ли он только idшники или какую-то лишнюю инфу тоже
+                # TODO: проверить, передает ли он только ids или какую-то лишнюю инфу тоже
                 bookmarks_for_remove = self.bookmarks_for_remove_schema.dump(bookmarks_for_remove)
                 logger.info(f'Тип:{type(bookmarks_for_remove)}')
                 logger.info(f'Закладки для удаления из базы: {bookmarks_for_remove}')
@@ -79,7 +79,5 @@ class RemoveBookmarks(Resource):
                 return bookmarks_for_remove
 
             return []
-
-
         except Exception as e:
             return json.dumps({"error": e})
