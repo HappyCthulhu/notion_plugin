@@ -1,6 +1,7 @@
-from backend.models import db, NewNotionPages
-from app import app
 from flask_migrate import Migrate
+
+from app import app
+from backend.models import db
 
 db.init_app(app)
 
