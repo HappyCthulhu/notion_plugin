@@ -1,13 +1,10 @@
-import os
 import time
 
-from notifiers import get_notifier
-
 from app import celery
+from backend.helpers.logger_settings import logger
+from backend.helpers.parse_bookmarks import parse_bookmarks
 from backend.models import BookmarksForRemove, AllNotionPages
-from .logger_settings import logger
-from .parse_bookmarks import parse_bookmarks
-from ..models import db
+from backend.models import db
 
 
 def get_duplicated_bookmarks_ids(bookmarks):
@@ -70,18 +67,20 @@ def collect_pages_for_removing():
     deleted_pages_ids = get_bookmarks_ids_of_deleted_pages(notion_pages, chrome_bookmarks)
     if deleted_pages_ids:
         logger.debug(f'Сейчас будет коммит в базу этих idшников: {deleted_pages_ids}')
+    else:
+        logger.debug(f'Закончен сбор. Закладок для удаления нету')
 
     duplicated_bookmarks_ids = get_duplicated_bookmarks_ids(chrome_bookmarks)
 
     ids_for_removing = (*deleted_pages_ids, *duplicated_bookmarks_ids)
 
     # TODO: проверить, нужно ли это вообще
-    for id in ids_for_removing:
-        if db.session.query(BookmarksForRemove).filter(BookmarksForRemove.bookmark_id == id).all():
+    for id_ in ids_for_removing:
+        if db.session.query(BookmarksForRemove).filter(BookmarksForRemove.bookmark_id == id_).all():
             time.sleep(20)
             logger.debug('Скрипт пытается запушить уже существующий в BookmarksForRemove idшник')
-        if db.session.query(BookmarksForRemove).filter(BookmarksForRemove.bookmark_id == id).all():
-            logger.critical(f'За 10 секунд idшник не удалился. Id: {id}')
+        if db.session.query(BookmarksForRemove).filter(BookmarksForRemove.bookmark_id == id_).all():
+            logger.critical(f'За 10 секунд idшник не удалился. Id: {id_}')
 
-        db.session.add(BookmarksForRemove(bookmark_id=id))
+        db.session.add(BookmarksForRemove(bookmark_id=id_))
         db.session.commit()
