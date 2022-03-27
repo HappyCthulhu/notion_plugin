@@ -3,7 +3,6 @@ from marshmallow_sqlalchemy import SQLAlchemyAutoSchema, auto_field
 
 from backend.models import NewNotionPages, BookmarksForRemove, AllNotionPages
 
-
 # marshmello должен быть иницианизирован после sql_alchemy
 ma = Marshmallow()
 
@@ -26,6 +25,7 @@ class BookmarksSchema(SQLAlchemyAutoSchema):
 
     class BookmarksForRemove():
         id = auto_field(dump_only=True, required=True)
+
 
 class AllNotionPagesSchema(SQLAlchemyAutoSchema):
     class Meta:
