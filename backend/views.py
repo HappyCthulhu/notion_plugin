@@ -19,6 +19,8 @@ class AddPages(Resource):
 
     def get(self):
         try:
+            # скорее всего, проблема отсутствия часть записей из бд в закладках была в том, что delete стоял гораздо ниже
+            # Он опустошал базу, в которой были данные, появившиеся после NewNotionPages.query.all()
             new_pages: dict = NewNotionPages.query.all()
             NewNotionPages.query.delete()
             db.session.commit()
@@ -58,7 +60,6 @@ class RemoveBookmarks(Resource):
             bookmarks_for_remove: list = BookmarksForRemove.query.all()
 
             if bookmarks_for_remove:
-                # TODO: проверить, передает ли он только ids или какую-то лишнюю инфу тоже
                 bookmarks_for_remove = self.bookmarks_for_remove_schema.dump(bookmarks_for_remove)
                 logger.info(f'Тип:{type(bookmarks_for_remove)}')
                 logger.info(f'Закладки для удаления из базы: {bookmarks_for_remove}')
