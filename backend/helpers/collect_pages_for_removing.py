@@ -77,10 +77,11 @@ def collect_pages_for_removing():
     # TODO: проверить, нужно ли это вообще
     for id_ in ids_for_removing:
         if db.session.query(BookmarksForRemove).filter(BookmarksForRemove.bookmark_id == id_).all():
-            time.sleep(20)
-            logger.debug('Скрипт пытается запушить уже существующий в BookmarksForRemove idшник')
+            time_count = 30
+            logger.debug(f'Скрипт пытается запушить уже существующий в BookmarksForRemove idшник. Ждем {time_count} cекунд')
+            time.sleep(time_count)
         if db.session.query(BookmarksForRemove).filter(BookmarksForRemove.bookmark_id == id_).all():
-            logger.critical(f'За 10 секунд idшник не удалился. Id: {id_}')
+            logger.critical(f'За 30 секунд idшник не удалился. Id: {id_}')
 
         db.session.add(BookmarksForRemove(bookmark_id=id_))
         db.session.commit()
