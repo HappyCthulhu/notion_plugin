@@ -20,6 +20,8 @@ class AddPages(Resource):
     def get(self):
         try:
             new_pages: dict = NewNotionPages.query.all()
+            NewNotionPages.query.delete()
+            db.session.commit()
 
             if new_pages:
                 new_pages_schema = self.new_pages_schema.dump(new_pages)
@@ -30,8 +32,6 @@ class AddPages(Resource):
                     message=f'New pages из базы: {new_pages}', token=os.environ['TELEGRAM_KEY'],
                     chat_id=os.environ['TELEGRAM_CHAT_ID'])
 
-                NewNotionPages.query.delete()
-                db.session.commit()
 
                 telegram.notify(
                     message='В данный момент база должна быть пуста', token=os.environ['TELEGRAM_KEY'],
