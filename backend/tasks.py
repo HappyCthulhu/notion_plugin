@@ -3,7 +3,7 @@ from backend.helpers.collect_pages_for_removing import collect_pages_for_removin
 from backend.helpers.notion_tracking import notion_tracking
 
 
-# celery -A backend.tasks worker --beat --loglevel=info
+# celery -A backend.tasks worker --beat --loglevel=info -f path_to_celery_log_file
 
 @celery.on_after_configure.connect
 def setup_periodic_tasks(sender, **kwargs):
@@ -12,4 +12,4 @@ def setup_periodic_tasks(sender, **kwargs):
     # delay нужен когда внутри других функций вызываю либо delay либо здесь. delay - вызов сразу же
     # expires - через какое время убивать таску
     sender.add_periodic_task(1.0, collect_pages_for_removing.s(), expires=180)
-    sender.add_periodic_task(10.0, notion_tracking.s(), expires=600)
+    sender.add_periodic_task(20.0, notion_tracking.s(), expires=600)
