@@ -60,14 +60,12 @@ def collect_pages(block, depth=0):
     else:
         comparing_depth_to_length = compare_depth_to_length(depth)
         page_name, page_url = create_bookmark_data(comparing_depth_to_length, depth, block)
-        logger.debug('collecting pages')
 
         path.append({'title': page_name, 'page_url': page_url,
                      'created_time': timestamp_to_datetime(block._get_record_data()['created_time']),
                      'last_edited_time': timestamp_to_datetime(block._get_record_data()['last_edited_time'])})
 
     for child in block.children:
-        logger.debug('collect page')
         if child.type in ["page", "collection"]:
             collect_pages(child, depth=depth + 1)
 
