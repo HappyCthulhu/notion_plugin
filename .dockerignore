@@ -1,0 +1,10 @@
+.git
+.env
+allure-report
+.*.swp
+.*.un~
+.idea
+reports
+.pytest.cache
+__pycache__
+.pytest_cache
