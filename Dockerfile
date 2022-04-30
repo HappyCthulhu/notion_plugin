@@ -15,11 +15,8 @@ RUN pip install setuptools
 RUN poetry config virtualenvs.in-project true
 RUN poetry install
 
-RUN echo 'eval "$(direnv hook bash)"' > .bashrc
-RUN curl -sfL https://direnv.net/install.sh | bash
-RUN direnv allow .
-
 RUN ls -lah
 RUN "pwd"
 
-RUN poetry run python app.py
+CMD poetry run python app.py
+#docker run -it --env-file .env notion-docker:latest
