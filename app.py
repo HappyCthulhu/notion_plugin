@@ -52,4 +52,4 @@ signal.signal(signal.SIGINT, signal_handler)
 
 if __name__ == "__main__":
     # debug: нужно для запуска через python app.py. if подставляет определенный конфиг сюда
-    app.run(debug=Config.DEBUG)
+    app.run(host='0.0.0.0', debug=Config.DEBUG)
