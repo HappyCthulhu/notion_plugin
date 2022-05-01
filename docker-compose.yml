@@ -1,0 +1,25 @@
+version: "3.8"
+
+services:
+    flask-server: 
+        build:
+            context: .
+            dockerfile: Dockerfile.flask
+            #        ports: 8080:8080 
+        env_file: .env
+        
+    redis:
+        image: redis
+        container_name: redis
+        environment:
+        - ALLOW_EMPTY_PASSWORD=yes
+        expose:
+            - '6379'
+        ports:
+            - '6379:6379'
+
+    celery-tasks:
+        build:
+            context: .
+            dockerfile: Dockerfile.celery
+        env_file: .env
