@@ -7,6 +7,8 @@ services:
             dockerfile: Dockerfile.flask
             #        ports: 8080:8080 
         env_file: .env
+        expose: 
+            - '5432'
         
     redis:
         image: redis
@@ -23,3 +25,16 @@ services:
             context: .
             dockerfile: Dockerfile.celery
         env_file: .env
+        depends_on:
+            - redis
+
+    postgres:
+        container_name: postgres_container
+        image: postgres
+        expose:
+            - '5432'
+        ports:
+            - "5432:5432"
+
+        depends_on:
+            - flask-server
