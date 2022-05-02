@@ -18,5 +18,5 @@ RUN poetry install
 RUN ls -lah
 RUN "pwd"
 
-CMD poetry run python app.py
-#docker run -it --env-file .env notion-docker:latest
+RUN chmod u+x ./entrypoint.sh
+ENTRYPOINT ["./entrypoint.sh"]
