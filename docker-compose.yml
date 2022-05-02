@@ -1,22 +1,21 @@
 version: "3.8"
 
 services:
+
     flask-server: 
         build:
             context: .
             dockerfile: Dockerfile.flask
-            #        ports: 8080:8080 
         env_file: .env
-        expose: 
-            - '5432'
-        
+        depends_on:
+            - postgres
+        entrypoint: /notion_plugin/entrypoint.sh
+                    
     redis:
         image: redis
         container_name: redis
         environment:
         - ALLOW_EMPTY_PASSWORD=yes
-        expose:
-            - '6379'
         ports:
             - '6379:6379'
 
@@ -31,10 +30,13 @@ services:
     postgres:
         container_name: postgres_container
         image: postgres
-        expose:
-            - '5432'
+        environment:
+            - POSTGRES_USER=postgres
+            - POSTGRES_PASSWORD=12345
+            - POSTGRES_DB=notion_plugin
+            - POSTGRES_HOST=host.docker.internal
+              #volumes:
+              #- '/home/valera/PycharmProjects/notion_plugin/:/notion_plugin'
         ports:
             - "5432:5432"
 
-        depends_on:
-            - flask-server
