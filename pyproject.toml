@@ -19,7 +19,6 @@ allure-python-commons = "^2.9.43"
 pytest-env = "^0.6.2"
 Flask-SQLAlchemy = "^2.5.1"
 mimesis = "^5.2.1"
-psycopg2 = "^2.9.3"
 Flask-Migrate = "^3.1.0"
 SQLAlchemy-Utils = "^0.38.2"
 Flask-RESTful = "^0.3.9"
@@ -28,6 +27,7 @@ flask-marshmallow = "^0.14.0"
 marshmallow-sqlalchemy = "^0.28.0"
 redis = "^4.1.4"
 paramiko = "^2.10.3"
+psycopg-binary = "^3.0.12"
 
 [tool.poetry.dev-dependencies]
 
