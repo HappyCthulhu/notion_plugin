@@ -13,7 +13,7 @@ jobs:
       - run: echo "${{secrets.SECRET_TEST}}"
       - name: Check out repository code
         uses: actions/checkout@v3
-      - name: List files in the repository
+#      - name: List files in the repository
       - run: ls
       - run: pwd
       - run: docker-compose -f docker-compose.yml up -d --build
