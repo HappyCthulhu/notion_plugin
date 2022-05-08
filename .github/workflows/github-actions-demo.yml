@@ -5,9 +5,9 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     steps:
-      - run: echo "$SECRET_TEST"
+      - run: echo "${{secrets.SECRET_TEST}}"
       - name: Check out repository code
         uses: actions/checkout@v3
       - name: Install python
