@@ -6,7 +6,7 @@ services:
         build:
             context: .
             dockerfile: Dockerfile.flask
-        env_file: .env
+            #        env_file: .env
         depends_on:
             - postgres
         entrypoint: /notion_plugin/entrypoint.sh
@@ -23,7 +23,7 @@ services:
         build:
             context: .
             dockerfile: Dockerfile.celery
-        env_file: .env
+            #        env_file: .env
         depends_on:
             - redis
 
