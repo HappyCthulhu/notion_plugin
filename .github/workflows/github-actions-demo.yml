@@ -14,8 +14,7 @@ jobs:
       - name: Check out repository code
         uses: actions/checkout@v3
       - name: List files in the repository
-        run: |
-          ls ${{ github.workspace }}        - run: echo "🍏 This job's status is ${{ job.status }}."
+      - run: ls
       - run: pwd
       - run: docker-compose -f docker-compose.yml up -d --build
 #      - run: echo "🎉 The job was automatically triggered by a ${{ github.event_name }} event."
