@@ -24,13 +24,17 @@ jobs:
     steps:
       - name: Installing python
         uses: actions/setup-python@v2
-        run: curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | python -
 
       - name: Checkout repo content
         uses: actions/checkout@v3
 
+      - name: Installing poetry
+        run: curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | python -
+
       - name: Handling poetry
         run: poetry config virtualenvs.in-project true
+
+      - name: Installing poetry virtual enviropment
       - run: poetry install
 
       - name: Run tests
