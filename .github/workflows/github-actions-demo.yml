@@ -24,6 +24,10 @@ jobs:
     steps:
       - name: Testing stage
         uses: actions/setup-python@v2
+        run: env
+      - run: curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | python -
+      - run: poetry config virtualenvs.in-project true
+      - run: poetry install
       - name: Handling the env vars
         env:
           FLASK_APP: ${{ secrets.FLASK_APP }}
@@ -48,12 +52,6 @@ jobs:
           SSH_PORT: ${{ secrets.SSH_PORT }}
           VIA_SSH: ${{ secrets.VIA_SSH }}
           SSH_COMMAND: ${{ secrets.SSH_COMMAND }}
-        uses: actions/checkout@v3
-      - run: env
-      - run: curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | python -
-      - run: poetry config virtualenvs.in-project true
-      - run: poetry install
-      - run: poetry run python print_env.py
-      - run: poetry run pytest -v -s some_tests/
+        run: env | poetry run python print_env.py | poetry run pytest -v -s some_tests/
 
 
