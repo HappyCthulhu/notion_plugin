@@ -52,6 +52,7 @@ jobs:
           SSH_PORT: ${{ secrets.SSH_PORT }}
           VIA_SSH: ${{ secrets.VIA_SSH }}
           SSH_COMMAND: ${{ secrets.SSH_COMMAND }}
+        uses: actions/checkout@v3
         run: env | poetry run python print_env.py | poetry run pytest -v -s some_tests/
 
 
