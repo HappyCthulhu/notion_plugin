@@ -2,6 +2,7 @@ import os
 from datetime import datetime
 
 import allure
+import pytest
 from mimesis.random import Random
 from notion.block import PageBlock
 from notion.client import NotionClient
@@ -13,7 +14,8 @@ from backend.helpers.logger_settings import logger
 from backend.models import AllNotionPages, NewNotionPages
 from some_tests.unit_tests.help_funcs_for_tests import wait_until, wait_until_not, find_bookmark_by_title, \
     check_present_of_record_in_db_all_notion_pages
-from some_tests.unit_tests.test_data.test_data import BookmarksDontContainsFewNotionPages
+
+# from some_tests.unit_tests.test_data.test_data import BookmarksDontContainsFewNotionPages
 
 rand = Random()
 
@@ -37,6 +39,7 @@ class TestCollectPagesForRemoving:
     @allure.title("Получение id  удаленных страниц")
     @allure.label("owner", "admin")
     # TODO: dот этот тест переделать под БД
+    @pytest.mark.skip
     def test_get_bookmarks_ids_of_deleted_pages(self):
         with allure.step("Получаем id  удаленных страниц"):
             ids_for_removing = get_bookmarks_ids_of_deleted_pages(BookmarksDontContainsFewNotionPages.notion_pages,
@@ -46,6 +49,7 @@ class TestCollectPagesForRemoving:
             assert ids_for_removing == ["2782", "2783"]
 
     # TODO: dот этот тест переделать под БД
+    @pytest.mark.skip
     def test_get_duplicated_bookmarks_ids(self):
         ids_for_removing = get_duplicated_bookmarks_ids(BookmarksDontContainsFewNotionPages.duplicated_bookmarks)
 
@@ -124,8 +128,6 @@ class TestCollectPagesForRemoving:
             assert wait_until_not(check_present_of_record_in_db_all_notion_pages, title, 1,
                                   600), 'Тестовая страница не была найдена в БД'
 
-    import pytest
-    @pytest.mark.debug
     @allure.title("Создание новой страницы")
     def test_script_catch_new_page(self, title, page, client):
         with allure.step('Ждем, пока она появится в all_notion_pages'):
