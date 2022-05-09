@@ -24,6 +24,7 @@ jobs:
   test:
     runs-on: self-hosted
     steps:
+      - run: env
       - name: Testing stage
         uses: actions/setup-python@v2
       - run: curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | python -
