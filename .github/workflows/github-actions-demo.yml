@@ -22,13 +22,18 @@ jobs:
   test:
     runs-on: self-hosted
     steps:
-      - name: Testing stage
+      - name: Installing python
         uses: actions/setup-python@v2
-        run: env
       - run: curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | python -
+
+      - name: Checkout repo content
+        uses: actions/checkout@v3
+
+      - name: Handling poetry
       - run: poetry config virtualenvs.in-project true
       - run: poetry install
-      - name: Handling the env vars
+
+      - name: Run tests
         env:
           FLASK_APP: ${{ secrets.FLASK_APP }}
           APP_SETTINGS: ${{ secrets.APP_SETTINGS }}
@@ -52,7 +57,6 @@ jobs:
           SSH_PORT: ${{ secrets.SSH_PORT }}
           VIA_SSH: ${{ secrets.VIA_SSH }}
           SSH_COMMAND: ${{ secrets.SSH_COMMAND }}
-        uses: actions/checkout@v3
         run: env | poetry run python print_env.py | poetry run pytest -v -s some_tests/
 
 
