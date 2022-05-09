@@ -27,6 +27,8 @@ jobs:
       - run: env
       - name: Testing stage
         uses: actions/setup-python@v2
+      - name: Testing stage
+        uses: actions/checkout@v3
       - run: curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | python -
       - run: poetry config virtualenvs.in-project true
       - run: poetry install
