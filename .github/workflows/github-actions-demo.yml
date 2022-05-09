@@ -25,6 +25,29 @@ jobs:
       - name: Testing stage
         uses: actions/setup-python@v2
       - name: Testing stage
+        env:
+          FLASK_APP: ${{ secrets.FLASK_APP }}
+          APP_SETTINGS: ${{ secrets.APP_SETTINGS }}
+          ROOT_PATH_DIR: ${{ secrets.ROOT_PATH_DIR }}
+          TOKEN: ${{ secrets.TOKEN }}
+          LINK: ${{ secrets.LINK }}
+          TELEGRAM_KEY: ${{ secrets.TELEGRAM_KEY }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          JSONIN: ${{ secrets.JSONIN }}
+          BOOKMARKS_FOLDER: ${{ secrets.BOOKMARKS_FOLDER }}
+          DB_HOST_NAME: ${{ secrets.DB_HOST_NAME }}
+          DB_USER_NAME: ${{ secrets.DB_USER_NAME }}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          DB_NAME: ${{ secrets.DB_NAME }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          CELERY_BROKER_URL: ${{ secrets.CELERY_BROKER_URL }}
+          CELERY_RESULT_BACKEND: ${{ secrets.CELERY_RESULT_BACKEND }}
+          SSH_USERNAME: ${{ secrets.SSH_USERNAME }}
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+          SSH_PASSWORD: ${{ secrets.SSH_PASSWORD }}
+          SSH_PORT: ${{ secrets.SSH_PORT }}
+          VIA_SSH: ${{ secrets.VIA_SSH }}
+          SSH_COMMAND: ${{ secrets.SSH_COMMAND }}
         uses: actions/checkout@v3
       - run: curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | python -
       - run: poetry config virtualenvs.in-project true
