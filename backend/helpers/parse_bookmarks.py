@@ -8,8 +8,6 @@ from backend.helpers.logger_settings import logger
 
 
 def get_bookmarks_from_local_directory():
-    print('Not via SSH')
-
     with open(JSONIN, "r", encoding='utf-8') as f:
         bookmarks = json.load(f)
 
@@ -17,7 +15,6 @@ def get_bookmarks_from_local_directory():
 
 
 def get_bookmarks_via_ssh():
-    print('Via SSH')
 
     host, port, username, password, command = os.environ['SSH_HOST'], int(os.environ['SSH_PORT']), os.environ[
         'SSH_USERNAME'], os.environ['SSH_PASSWORD'], os.environ['SSH_COMMAND']
