@@ -156,9 +156,9 @@ class TestCollectPagesForRemoving:
 
         with allure.step('Считаем количество записей в таблице all_notion_pages'):
             with app.app_context():
-                count_of_db_records = db.session.query(AllNotionPages).all()
+                count_of_db_records = len(db.session.query(AllNotionPages).all())
         logger.debug(f'Количество записей в таблице all_notion_pages: {count_of_db_records}')
 
-        assert count_of_bookmarks == count_of_db_records, 'количество закладок и записей в таблице фll_notion_pages не совпадают'
+        assert count_of_bookmarks == count_of_db_records, 'количество закладок и записей в таблице all_notion_pages не совпадают'
 
 
