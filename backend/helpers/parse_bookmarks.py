@@ -11,9 +11,9 @@ def get_bookmarks_from_local_directory():
     print('Not via SSH')
 
     with open(JSONIN, "r", encoding='utf-8') as f:
-        Bookmarks = json.load(f)
+        bookmarks = json.load(f)
 
-    return Bookmarks
+    return bookmarks
 
 
 def get_bookmarks_via_ssh():
@@ -26,9 +26,9 @@ def get_bookmarks_via_ssh():
     ssh.connect(host, port, username, password)
 
     stdin, stdout, stderr = ssh.exec_command(command)
-    Bookmarks = json.loads(''.join(stdout.readlines()))
+    bookmarks = json.loads(''.join(stdout.readlines()))
 
-    return Bookmarks
+    return bookmarks
 
 
 # TODO: это может хреново работать, ибо должно вызываться всего раз за отработку цикл
@@ -81,17 +81,17 @@ def find_folder(tree, depth=0):
 
 def parse_bookmarks():
     if os.environ['VIA_SSH'] == 'False':
-        Bookmarks = get_bookmarks_from_local_directory()
+        bookmarks = get_bookmarks_from_local_directory()
 
     elif os.environ['VIA_SSH'] == 'True':
-        Bookmarks = get_bookmarks_via_ssh()
+        bookmarks = get_bookmarks_via_ssh()
 
     else:
         logger.critical('VIA_SHH env var is not set properly')
         sys.exit()
 
     global first_stage
-    first_stage = Bookmarks['roots']['bookmark_bar']['children']
+    first_stage = bookmarks['roots']['bookmark_bar']['children']
     folder_data = find_folder(first_stage)
 
     try:
