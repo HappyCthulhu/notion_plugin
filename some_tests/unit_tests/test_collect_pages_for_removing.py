@@ -35,25 +35,23 @@ class TestCollectPagesForRemoving:
             page = client.get_block(os.environ['LINK'])
             assert page
 
-    @allure.id("5")
-    @allure.title("Получение id  удаленных страниц")
-    @allure.label("owner", "admin")
+    # @allure.id("5")
+    # @allure.title("Получение id  удаленных страниц")
+    # @allure.label("owner", "admin")
     # TODO: dот этот тест переделать под БД
-    @pytest.mark.skip
-    def test_get_bookmarks_ids_of_deleted_pages(self):
-        with allure.step("Получаем id  удаленных страниц"):
-            ids_for_removing = get_bookmarks_ids_of_deleted_pages(BookmarksDontContainsFewNotionPages.notion_pages,
-                                                                  BookmarksDontContainsFewNotionPages.parsed_bookmarks)
+    # def test_get_bookmarks_ids_of_deleted_pages(self):
+        # with allure.step("Получаем id  удаленных страниц"):
+        #     ids_for_removing = get_bookmarks_ids_of_deleted_pages(BookmarksDontContainsFewNotionPages.notion_pages,
+        #                                                           BookmarksDontContainsFewNotionPages.parsed_bookmarks)
 
-        with allure.step("Сравниваем id из функции с захардкоденными"):
-            assert ids_for_removing == ["2782", "2783"]
+        # with allure.step("Сравниваем id из функции с захардкоденными"):
+        #     assert ids_for_removing == ["2782", "2783"]
 
     # TODO: dот этот тест переделать под БД
-    @pytest.mark.skip
-    def test_get_duplicated_bookmarks_ids(self):
-        ids_for_removing = get_duplicated_bookmarks_ids(BookmarksDontContainsFewNotionPages.duplicated_bookmarks)
-
-        assert ids_for_removing == ["2789", "2790"]
+    # def test_get_duplicated_bookmarks_ids(self):
+        # ids_for_removing = get_duplicated_bookmarks_ids(BookmarksDontContainsFewNotionPages.duplicated_bookmarks)
+        #
+        # assert ids_for_removing == ["2789", "2790"]
 
     # TODO: приделать неавтоматическую фикстуру, которая устанавливает connection с дб
     @allure.title("Скрипт удаляет закладку, которой нет в БД")
@@ -124,7 +122,7 @@ class TestCollectPagesForRemoving:
             page.remove()
 
         with allure.step('Ждем, пока удалится из all_notion_pages'):
-            logger.debug('Ждем удаления тестовой запсии из all_notion_page')
+            logger.debug('Ждем удаления тестовой записи из all_notion_page')
             assert wait_until_not(check_present_of_record_in_db_all_notion_pages, title, 1,
                                   600), 'Тестовая страница не была найдена в БД'
 
