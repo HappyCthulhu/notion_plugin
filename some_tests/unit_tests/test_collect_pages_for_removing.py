@@ -2,14 +2,12 @@ import os
 from datetime import datetime
 
 import allure
-import pytest
 from mimesis.random import Random
 from notion.block import PageBlock
 from notion.client import NotionClient
 from sqlalchemy.orm import scoped_session
 
 from app import db, app
-from backend.helpers.collect_pages_for_removing import get_bookmarks_ids_of_deleted_pages, get_duplicated_bookmarks_ids
 from backend.helpers.logger_settings import logger
 from backend.models import AllNotionPages, NewNotionPages
 from some_tests.unit_tests.help_funcs_for_tests import wait_until, wait_until_not, find_bookmark_by_title, \
@@ -20,6 +18,7 @@ from some_tests.unit_tests.help_funcs_for_tests import wait_until, wait_until_no
 rand = Random()
 
 
+# TODO: тест проверки обновления даты существующей записи
 # TODO: сделать интеграционный тест для дублирования закладок
 # TODO: создать классы, в которых будут содержаться данные для тестов (json-ны, например). Каждый аргумент класса (DataForTest.notion_page_was_deleted) должен возвращать bookmark, notion_pages с содажранием, соответствующим названию аргумента
 # TODO: создать миграции для БД
@@ -40,18 +39,18 @@ class TestCollectPagesForRemoving:
     # @allure.label("owner", "admin")
     # TODO: dот этот тест переделать под БД
     # def test_get_bookmarks_ids_of_deleted_pages(self):
-        # with allure.step("Получаем id  удаленных страниц"):
-        #     ids_for_removing = get_bookmarks_ids_of_deleted_pages(BookmarksDontContainsFewNotionPages.notion_pages,
-        #                                                           BookmarksDontContainsFewNotionPages.parsed_bookmarks)
+    # with allure.step("Получаем id  удаленных страниц"):
+    #     ids_for_removing = get_bookmarks_ids_of_deleted_pages(BookmarksDontContainsFewNotionPages.notion_pages,
+    #                                                           BookmarksDontContainsFewNotionPages.parsed_bookmarks)
 
-        # with allure.step("Сравниваем id из функции с захардкоденными"):
-        #     assert ids_for_removing == ["2782", "2783"]
+    # with allure.step("Сравниваем id из функции с захардкоденными"):
+    #     assert ids_for_removing == ["2782", "2783"]
 
     # TODO: dот этот тест переделать под БД
     # def test_get_duplicated_bookmarks_ids(self):
-        # ids_for_removing = get_duplicated_bookmarks_ids(BookmarksDontContainsFewNotionPages.duplicated_bookmarks)
-        #
-        # assert ids_for_removing == ["2789", "2790"]
+    # ids_for_removing = get_duplicated_bookmarks_ids(BookmarksDontContainsFewNotionPages.duplicated_bookmarks)
+    #
+    # assert ids_for_removing == ["2789", "2790"]
 
     # TODO: приделать неавтоматическую фикстуру, которая устанавливает connection с дб
     @allure.title("Скрипт удаляет закладку, которой нет в БД")
@@ -148,4 +147,17 @@ class TestCollectPagesForRemoving:
             assert wait_until(check_present_of_record_in_db_all_notion_pages, new_title, 1,
                               600), 'Переименованная тестовая страница не была найдена в БД'
 
-# TODO: тест проверки обновления даты существующей записи
+    def test_than_bookmarks_and_db_have_equal_count_of_records(self):
+        with allure.step('Считаем количество notion-закладок в Chrome'):
+            from backend.helpers.parse_bookmarks import parse_bookmarks
+            count_of_bookmarks = len(parse_bookmarks())
+        logger.debug(f'Количество закладок: {count_of_bookmarks}')
+
+        with allure.step('Считаем количество записей в таблице all_notion_pages'):
+            with app.app_context():
+                count_of_db_records = db.session.query(AllNotionPages).all()
+        logger.debug(f'Количество записей в таблице all_notion_pages: {count_of_db_records}')
+
+        assert count_of_bookmarks == count_of_db_records, 'количество закладок и записей в таблице фll_notion_pages не совпадают'
+
+
