@@ -41,11 +41,6 @@ jobs:
       - name: Installing poetry virtual enviropment
         run: poetry install
 
-      - name: Checking availability of BookmarksInstalling poetry virtual enviropment
-        env:
-          JSONIN: ${{ secrets.JSONIN }}
-        run: poetry run python delete_this.py
-
       - name: Run tests
         env:
           FLASK_APP: ${{ secrets.FLASK_APP }}
