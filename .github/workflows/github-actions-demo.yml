@@ -37,6 +37,9 @@ jobs:
       - name: Installing poetry virtual enviropment
         run: poetry install
 
+      - name: Checking availability of Bookmarks
+        run: poetry install
+
       - name: Run tests
         env:
           FLASK_APP: ${{ secrets.FLASK_APP }}
