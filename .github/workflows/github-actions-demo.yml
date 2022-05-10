@@ -36,6 +36,8 @@ jobs:
         run: poetry install
 
       - name: Checking availability of BookmarksInstalling poetry virtual enviropment
+        env:
+          JSONIN: ${{ secrets.JSONIN }}
         run: poetry run python delete_this.py
 
       - name: Run tests
