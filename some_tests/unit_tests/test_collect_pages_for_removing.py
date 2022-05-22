@@ -146,7 +146,6 @@ class TestCollectPagesForRemoving:
             logger.debug('Ждем появления тестовой записи в all_notion_page')
             assert wait_until(check_present_of_record_in_db_all_notion_pages, new_title, 1,
                               600), 'Переименованная тестовая страница не была найдена в БД'
-
     def test_than_bookmarks_and_db_have_equal_count_of_records(self):
         with allure.step('Считаем количество notion-закладок в Chrome'):
             from backend.helpers.parse_bookmarks import parse_bookmarks
