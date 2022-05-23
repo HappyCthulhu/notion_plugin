@@ -7,7 +7,6 @@ authors = ["HappyCthulhu <valeriyg98@gmail.com>"]
 [tool.poetry.dependencies]
 python = "^3.8"
 loguru = "^0.5.3"
-notion = "^0.0.28"
 notifiers = "^1.2.1"
 Flask-Cors = "^3.0.10"
 Flask = "^2.0.1"
@@ -27,6 +26,7 @@ marshmallow-sqlalchemy = "^0.28.0"
 redis = "^4.1.4"
 paramiko = "^2.10.3"
 psycopg2-binary = "^2.9.3"
+notion = "^0.0.28"
 
 [tool.poetry.dev-dependencies]
 
