@@ -1,5 +1,6 @@
 from sqlalchemy import and_
 
+from app import celery
 from app import app
 from backend.helpers.json_model import ACTIVITYLOG, CACHEDPAGECHUNK
 from backend.helpers.logger_settings import logger
@@ -93,11 +94,13 @@ def process_existing_in_notion_pages(pages):
 
 
 # TODO: когда дойду до стадии запуска через celery, нужно будет app.context() удалить
-with app.app_context():
+@celery.task
+def get_pages_updates():
+    with app.app_context():
 
-    logger.debug('Start program')
+        logger.debug('Start get_pages_update')
 
-    activity_log = ACTIVITYLOG()
-    process_existing_in_notion_pages(activity_log.recently_changed_pages)
+        activity_log = ACTIVITYLOG()
+        process_existing_in_notion_pages(activity_log.recently_changed_pages)
 
-    logger.debug('End of program')
+        logger.debug('End of get_pages_update')
