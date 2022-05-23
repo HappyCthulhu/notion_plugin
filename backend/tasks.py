@@ -1,4 +1,5 @@
 from app import celery
+from backend.helpers.get_pages_updates import get_pages_updates
 from backend.helpers.collect_pages_for_removing import collect_pages_for_removing
 from backend.helpers.notion_tracking import notion_tracking
 
@@ -12,4 +13,5 @@ def setup_periodic_tasks(sender, **kwargs):
     # delay нужен когда внутри других функций вызываю либо delay либо здесь. delay - вызов сразу же
     # expires - через какое время убивать таску
     sender.add_periodic_task(1.0, collect_pages_for_removing.s(), expires=180)
+    sender.add_periodic_task(1.0, get_pages_updates.s(), expires=180)
     sender.add_periodic_task(20.0, notion_tracking.s(), expires=600)
