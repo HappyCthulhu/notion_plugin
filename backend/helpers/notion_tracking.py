@@ -140,11 +140,12 @@ def process_existing_in_notion_pages(path):
         elif new_page(current_page):
             continue
         else:
-            logger.critical('Some weird shit happend. But u will find out very quick, i promise!')
+            logger.critical('Some weird shit happened. But u will find out very quick, i promise!')
             sys.exit()
 
 
 def delete_in_db_deleted_notion_pages(all_current_pages):
+    # TODO: коммент на следующей строке обработать. Выглядит как косяк в логике программы
     # в БД есть запись с таким же url, но другим названием: удаляем из БД, добавляем новую запись
     # БД содержит название и url заметки, которой нет в Notion: удаляем из БД
     current_pages_links = [page_from_db['page_url'] for page_from_db in all_current_pages]
@@ -176,18 +177,18 @@ def notion_tracking():
     global path
     path = []
 
+    def get_time(start, end):
+        return end - start
+
     for block in child_pages:
         collect_pages(block)
 
     delete_in_db_deleted_notion_pages(path)
+
     process_existing_in_notion_pages(path)
-    # TODO: потом удалить
+
     db.session.commit()
-    logger.debug('Finished tracking Notion')
 
+    logger.debug('Finish tracking Notion')
 
-# TODO: не стоит ли подтягивать в ДБ all_notion_pages те страницы, что были найдены в дб new_pages? А то сейчас это иначе происходит
 telegram = get_notifier('telegram')
-# TODO: мб стоит прихуярить логгирование к переименованным и удаленным страницам? Разве это не сделано?
-# TODO: проверяю ли я где-то перед добавлянием новой страницы в букмарки, нет ли ее в букмарках случаем?
-# TODO: сделать интеграционный тест для дублирования закладок. Пока непонятно, как. Это ж нужно через сервак делать
