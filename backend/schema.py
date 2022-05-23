@@ -15,10 +15,6 @@ class NewPagesSchema(SQLAlchemyAutoSchema):
     link = auto_field(dump_only=True)
     title = auto_field(dump_only=True)
 
-
-# TODO: добавить class AllNotionPages():
-
-
 class BookmarksSchema(SQLAlchemyAutoSchema):
     class Meta:
         model = BookmarksForRemove
