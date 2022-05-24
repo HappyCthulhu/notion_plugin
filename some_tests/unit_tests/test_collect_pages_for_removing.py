@@ -71,11 +71,11 @@ class TestCollectPagesForRemoving:
             logger.debug('Запись добавлена в таблицу new_pages')
 
         with allure.step('Проверяем, что chrome-plugin добавил страницу в закладки'):
-            assert wait_until(find_bookmark_by_title, title, 0.1, 20), 'Тестовая закладка не была найдена'
+            assert wait_until(find_bookmark_by_title, title, 0.1, 60), 'Тестовая закладка не была найдена'
             logger.debug('Тестовая запись добавлена в закладки')
 
         with allure.step('Проверяем, test_collect_pages_for_removing и  chrome-plugin удалил страницу из закладок'):
-            assert wait_until_not(find_bookmark_by_title, title, 0.1, 20), 'Тестовая закладка не была найдена'
+            assert wait_until_not(find_bookmark_by_title, title, 0.1, 60), 'Тестовая закладка не была найдена'
             logger.debug('Тестовая запись была успешно удалена из закладок')
 
     # TODO: нужно уменьшить время ожидания везде
@@ -99,7 +99,7 @@ class TestCollectPagesForRemoving:
         with allure.step('Ждем, пока удалится из all_notion_pages'):
             logger.debug('Ждем удаления тестовой записи из all_notion_page')
             assert wait_until_not(check_present_of_record_in_db_all_notion_pages, title, 1,
-                                  600), 'Тестовая страница не была найдена в БД'
+                                  60), 'Тестовая страница не была найдена в БД'
 
     @allure.title("Создание новой страницы")
     def test_script_catch_new_page(self, title, page, client):
@@ -121,7 +121,7 @@ class TestCollectPagesForRemoving:
         with allure.step('Ждем, пока переименованная запись появится в all_notion_pages'):
             logger.debug('Ждем появления тестовой записи в all_notion_page')
             assert wait_until(check_present_of_record_in_db_all_notion_pages, new_title, 1,
-                              600), 'Переименованная тестовая страница не была найдена в БД'
+                              60), 'Переименованная тестовая страница не была найдена в БД'
 
     # это невалидная праверка. Скрипт должен удалять notion-страницу, удаленную из Notion, а не рандомную запись, которая есть в БД
     # после создания скрипта, который собирает обновления о страницах, а не парсит notion целиком, этот тест не будет проходить
@@ -149,7 +149,7 @@ class TestCollectPagesForRemoving:
 
         with allure.step('Проверяем, test_collect_pages_for_removing и  chrome-plugin удалил страницу из закладок'):
             assert wait_until_not(check_present_of_record_in_db_all_notion_pages, title, 1,
-                                  60), 'Тестовая закладка не была найдена'
+                                  600), 'Тестовая закладка не была найдена'
             logger.debug('Тестовая запись была успешно удалена из all_notion_pages')
 
     def test_than_bookmarks_and_db_have_equal_count_of_records(self):
