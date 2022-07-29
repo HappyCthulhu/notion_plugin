@@ -1,7 +1,7 @@
 from sqlalchemy import and_
 
-from app import celery
 from app import app
+from app import celery
 from backend.helpers.json_model import ACTIVITYLOG, CACHEDPAGECHUNK
 from backend.helpers.logger_settings import logger
 from backend.models import db, AllNotionPages, NewNotionPages
@@ -93,14 +93,12 @@ def process_existing_in_notion_pages(pages):
                 f'Some weird shit happened. Page is not renamed, changed or created... But u will find out very quick, i promise!\nPage Title: {page["title"]}')
 
 
-# TODO: когда дойду до стадии запуска через celery, нужно будет app.context() удалить
 @celery.task
 def get_pages_updates():
     with app.app_context():
-
         logger.debug('Start get_pages_update')
 
         activity_log = ACTIVITYLOG()
-        process_existing_in_notion_pages(activity_log.recently_changed_pages)
-
+        if activity_log.last_edited_time is not None:
+            process_existing_in_notion_pages(activity_log.recently_changed_pages)
         logger.debug('End of get_pages_update')

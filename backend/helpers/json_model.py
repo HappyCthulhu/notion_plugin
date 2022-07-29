@@ -1,5 +1,6 @@
 import os
 from datetime import datetime
+from backend.helpers.logger_settings import logger
 
 import requests
 
@@ -10,7 +11,14 @@ class CACHEDPAGECHUNK:
     def __init__(self, page_id):
 
         self.page_id = page_id
-        self.blocks = self.send_request()['recordMap']['block']
+
+        self.response = self.send_request()
+        if self.response.status_code == 200:
+            self.blocks = self.response.json()['recordMap']['block']
+        else:
+            logger.critical(f'Код ошибки: {self.response.status_code}')
+            logger.critical(f'Текст ошибки: {self.response.text}')
+
         self.structure_pages()
         self.create_breadcrumbs()
 
@@ -33,7 +41,7 @@ class CACHEDPAGECHUNK:
             cookies=cookies,
             headers={'notion-client-version': '23.10.25.10', },
             json=json_payload
-        ).json()
+        )
 
         return response
 
@@ -80,8 +88,6 @@ class CACHEDPAGECHUNK:
             return False
 
         if not block_updates['value']['role'] == 'editor':
-            # print(f'U have wrong access rights to this page. Role must be "editor"\n'
-            #       f'Role of current page: {block_updates["value"]["role"]}')
             return False
 
         if not block_updates['value']['value']['type'] == 'page':
@@ -140,10 +146,20 @@ class ACTIVITYLOG:
     def __init__(self):
 
         space_id = self.get_spaceid()
-        self.blocks = self.send_request(space_id)['recordMap']['block']
+
+        self.response = self.send_request(space_id)
+        if self.response.status_code == 200:
+            self.blocks = self.response.json()['recordMap']['block']
+        else:
+            logger.critical(f'Код ошибки: {self.response.status_code}')
+            logger.critical(f'Текст ошибки: {self.response.text}')
+
         self.structure_page()
         self.get_last_edited_time_from_db()
-        self.find_recently_changed_blocks()
+        if self.last_edited_time:
+            self.find_recently_changed_blocks()
+        else:
+            logger.debug('AllNotionPages db is empty')
 
     def get_spaceid(self):
 
@@ -177,7 +193,7 @@ class ACTIVITYLOG:
         }
 
         response = requests.post('https://www.notion.so/api/v3/getActivityLog',
-                                 cookies=cookies, json=json_payload).json()
+                                 cookies=cookies, json=json_payload)
 
         return response
 
@@ -237,13 +253,16 @@ class ACTIVITYLOG:
 
     def get_last_edited_time_from_db(self):
         pages_from_db = db.session.query(AllNotionPages).all()
-        latest_time = pages_from_db[0].last_edited_time
+        if pages_from_db:
+            latest_time = pages_from_db[0].last_edited_time
 
-        for page in pages_from_db:
-            if page.last_edited_time > latest_time:
-                latest_time = page.last_edited_time
+            for page in pages_from_db:
+                if page.last_edited_time > latest_time:
+                    latest_time = page.last_edited_time
 
-        self.last_edited_time = latest_time
+            self.last_edited_time = latest_time
+        else:
+            self.last_edited_time = None
 
     def find_recently_changed_blocks(self):
         self.recently_changed_pages = []
